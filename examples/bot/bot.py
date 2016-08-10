@@ -25,7 +25,7 @@ def get_distance((x1, y1), (x2, y2)):
     return distance
 
 def get_key_from_pokemon(pokemon):
-    return '{}-{}'.format(pokemon['spawn_point_id'], pokemon['pokemon_data']['pokemon_id'])
+    return '{}-{}'.format(pokemon['spawn_point_id'], pokemon['encounter_id'])
 
 def angle_between_points((lat1, lng1), (lat2, lng2)):
     xDiff = lng2 - lng1
@@ -99,7 +99,6 @@ class PoGoBot(object):
         self.scan_stats = {}
         self.cell_timestamps = {}
         self.incense_encounters = {}
-        self.lure_encounters = {}
 
         self.last_move_time = time.time()
         self.change_dir_time = self.last_move_time + random.uniform(60,300)
@@ -445,8 +444,6 @@ class PoGoBot(object):
     def clean_encounter(self, kind, upid):
         if kind == "incense" and upid in self.incense_encounters.keys():
             del self.incense_encounters[upid]
-        elif kind == "lure" and upid in self.lure_encounters.keys():
-            del self.lure_encounters[upid]
         elif kind == "wild" and upid in self.pois["pokemon"].keys():
             del self.pois["pokemon"][upid]
 
@@ -563,8 +560,6 @@ class PoGoBot(object):
                         pokemon["longitude"] = fort["longitude"]
                         sys.stdout.write("  Encountered a lured %s...\n" % self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]))
                         clean.append(self.catch_pokemon(pokemon, "lure", self.balls, delay, pid))
-                    elif ret["responses"]["DISK_ENCOUNTER"]["result"] == 2:
-                        self.lure_encounters[pid] = pokemon
                     else:
                         print(ret)
         for c in clean:
@@ -634,7 +629,7 @@ class PoGoBot(object):
         delta = now - self.last_move_time
         lat, lng, alt = self.api.get_position()
         r = 1.0/69.0/60.0/60.0*mph*delta
-        if len(self.incense_encounters.keys()) > 0:
+        if len(self.balls) > 0 and len(self.incense_encounters.keys()) > 0:
             sys.stdout.write("  Heading towards nearby incense pokemon...\n")
             nearest = (None, float("inf"))
             for pid, pokemon in self.incense_encounters.iteritems():
@@ -648,21 +643,7 @@ class PoGoBot(object):
                 self.angle = get_angle((lat, lng), (nearest[0]["latitude"], nearest[0]["longitude"]))
                 lat = lat + pymath.sin(pymath.radians(self.angle)) * r
                 lng = lng + pymath.cos(pymath.radians(self.angle)) * r
-        elif len(self.lure_encounters.keys()) > 0:
-            sys.stdout.write("  Heading towards nearby lure pokemon...\n")
-            nearest = (None, float("inf"))
-            for pid, pokemon in self.lure_encounters.iteritems():
-                d = get_distance((pokemon['latitude'], pokemon['longitude']), (lat, lng))
-                if d < nearest[1]:
-                    nearest = (pokemon, d)
-            if nearest[1] < r:
-                lat = nearest[0]["latitude"]
-                lng = nearest[0]["longitude"]
-            else:
-                self.angle = get_angle((lat, lng), (nearest[0]["latitude"], nearest[0]["longitude"]))
-                lat = lat + pymath.sin(pymath.radians(self.angle)) * r
-                lng = lng + pymath.cos(pymath.radians(self.angle)) * r
-        elif len(self.pois["pokemon"]) > 0:
+        elif len(self.balls) > 0 and len(self.pois["pokemon"]) > 0:
             sys.stdout.write("  Heading towards nearby wild pokemon...\n")
             nearest = (None, float("inf"))
             for pid, pokemon in self.pois["pokemon"].iteritems():
@@ -907,7 +888,7 @@ class PoGoBot(object):
                 self.kill_time(delay)
                 if not self.config["nospin"]:
                     self.spin_pokestops(1)
-                if not self.config["nocatch"]:
+                if not self.config["nocatch"] and len(self.balls) > 0:
                     self.catch_wild_pokemon(delay)
                     self.catch_incense_pokemon(delay)
                     self.catch_lure_pokemon(delay)

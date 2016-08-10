@@ -53,13 +53,19 @@ class Map(object):
                         }});
                         marker.setIcon('http://maps.google.com/mapfiles/ms/icons/purple.png');""".format(lat=self._player[0], lng=self._player[1])
         return """
+
+            <head>
+                <meta charset="utf-8">
+                <title>bot</title>
+            </head>
+            <body>
             <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
             <div id="map-canvas" style="height: 100%; width: 100%"></div>
             <script type="text/javascript">
                 var map;
                 function show_map() {{
                     map = new google.maps.Map(document.getElementById("map-canvas"), {{
-                        zoom: 16,
+                        zoom: 5,
                         center: new google.maps.LatLng({centerLat}, {centerLon})
                     }});
                     var bnds = new google.maps.LatLngBounds();
@@ -70,6 +76,7 @@ class Map(object):
                 }}
                 google.maps.event.addDomListener(window, 'load', show_map);
             </script>
+            </body>
         """.format(centerLat=centerLat, centerLon=centerLon,
                    pathCode=pathCode, playerCode=playerCode,
                    markersCode=markersCode)

@@ -68,6 +68,9 @@ class PoGoBot(object):
         self.softbanned = False
         self.unsoftban = 0
         self.api = pgoapi.PGoApi()
+        # loc = self.config["location"].split(',').append('0')
+        # loc = map(float, loc)
+
         self.api.set_position(*self.config["location"])
         self.api.set_authentication(provider=self.config["auth_service"],
                                     username=self.config["username"],
@@ -211,7 +214,7 @@ class PoGoBot(object):
         sys.stdout.write("  Next level experience needed: %d\n" % (self.inventory["stats"]["next_level_xp"]-self.inventory["stats"]["experience"]))
         sys.stdout.write("  Kilometers walked: %.2f\n" % self.inventory["stats"]["km_walked"])
         sys.stdout.write("  Stardust: %d\n" % [cur["amount"] for cur in self.player["currencies"] if cur["name"] == "STARDUST"][0])
-        sys.stdout.write("  Hatched eggs: %d\n" % self.inventory["stats"]["eggs_hatched"])
+        # sys.stdout.write("  Hatched eggs: %d\n" % self.inventory["stats"]["eggs_hatched"])
         sys.stdout.write("  Forts spun: %d\n" % self.inventory["stats"]["poke_stop_visits"])
         sys.stdout.write("  Unique pokedex entries: %d\n" % (self.inventory["stats"]["unique_pokedex_entries"]))
         sys.stdout.write("  Pokemon storage: %d/%d\n" % (sum([len(v) for k,v in self.inventory["pokemon"].iteritems()]) + len(self.inventory["eggs"]), self.player["max_pokemon_storage"]))
@@ -498,7 +501,7 @@ class PoGoBot(object):
             if ret["responses"]["INCENSE_ENCOUNTER"]["result"] == 1:
                 print(ret)
                 self.catch_pokemon(pokemon["encounter_id"], pokemon["encounter_location"], "incense", pokemon, self.balls, delay)
-
+                # self.catch_pokemon(pokemon, self.balls, delay)
     def update_path(self):
         sys.stdout.write("Updating path...\n")
         lat, lng, alt = self.api.get_position()
@@ -586,13 +589,13 @@ class PoGoBot(object):
             map.add_point((lat, lng), "http://pokeapi.co/media/sprites/pokemon/%d.png" % pid)
         for spin in self.spins:
             map.add_point((spin['latitude'], spin['longitude']), "http://maps.google.com/mapfiles/ms/icons/blue.png")
-        for sp in self.pois["spawn_points"]:
-            map.add_point(sp, "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
-        for _, pokestop in self.pois["pokestops"].iteritems():
-            if pokestop["id"] in self.visited:
-                map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
-            else:
-                map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/green-circle.png")
+        # for sp in self.pois["spawn_points"]:
+        #     map.add_point(sp, "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
+        # for _, pokestop in self.pois["pokestops"].iteritems():
+        #     if pokestop["id"] in self.visited:
+        #         map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
+        #     else:
+        #         map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/green-circle.png")
         for _, gym in self.pois["gyms"].iteritems():
             map.add_point((gym['latitude'], gym['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/blue-circle.png")
         # for _, pokemon in self.pois["pokemon"].iteritems():

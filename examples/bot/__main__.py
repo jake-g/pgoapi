@@ -25,6 +25,9 @@ def init_config():
     if os.path.isfile(config_file):
         with open(config_file) as data:
             config.update(json.load(data))
+    if "powerquotient" in config:
+        config["minpq"] = config["powerquotient"]
+        del config["powerquotient"]
 
     # Read passed in Arguments
     required = lambda x: not x in config
@@ -38,7 +41,8 @@ def init_config():
     parser.add_argument("-m", "--minpokemon", type=int, help="Minimum number of pokemon for auto transfing", required=required("minpokemon"))
     parser.add_argument("-s", "--speed", type=float, help="Travel speed in miles per hour", required=required("speed"))
     parser.add_argument("-r", "--radius", type=int, help="S2 Cell search radius", required=required("radius"))
-    parser.add_argument("-q", "--powerquotient", type=int, help="Minimum power quotient for keeping pokemon", required=required("powerquotient"))
+    parser.add_argument("--minpq", type=int, help="Minimum power quotient for keeping pokemon", required=required("minpq"))
+    parser.add_argument("--mincp", type=int, help="Minimum combat power for keeping pokemon", required=required("mincp"))
     parser.add_argument("-d", "--debug", help="Debug Mode", action='store_true')
     parser.add_argument("--best_balls_first", action='store_true', help="Prioritize throwing better balls")
     parser.add_argument("--nospin", action='store_true', help="Disable spinning forts")

@@ -292,9 +292,9 @@ class PoGoBot(object):
     def get_pois(self, delay):
         sys.stdout.write("Getting POIs...\n")
         lat, lng, alt = self.api.get_position()
-        level = 15#random.randint(15,17)
+        level = random.randint(15,17)
         if not level in self.scan_stats:
-            self.scan_stats[level] = {"wild_pokemons": 0}
+            self.scan_stats[level] = {"wild_pokemon": 0, "spawn_points": 0}
         cell_ids = self.get_cell_ids(lat, lng, level=level, radius=self.config["radius"])
         for cid in cell_ids:
             if not cid in self.cell_timestamps:
@@ -306,12 +306,11 @@ class PoGoBot(object):
         newpokemon = 0
         newpokestops = 0
         newgyms = 0
-        newsp = 0
+        newspawnpoints = 0
         if ret and ret["responses"] and "GET_MAP_OBJECTS" in ret["responses"] and ret["responses"]["GET_MAP_OBJECTS"]["status"] == 1:
             for map_cell in ret["responses"]["GET_MAP_OBJECTS"]["map_cells"]:
                 self.cell_timestamps[map_cell["s2_cell_id"]] = map_cell["current_timestamp_ms"]
                 if "wild_pokemons" in map_cell:
-                    self.scan_stats[level]["wild_pokemons"] += 1
                     for pokemon in map_cell["wild_pokemons"]:
                         pid = get_key_from_pokemon(pokemon)
                         if not pid in self.pois["pokemon"]:
@@ -334,21 +333,28 @@ class PoGoBot(object):
                     for sp in map_cell['spawn_points']:
                         if "bounds" in self.config and not point_in_poly(sp["latitude"], sp["longitude"], self.config["bounds"]):
                             continue
-                        self.pois["spawn_points"].add((sp["latitude"],sp["longitude"]))
+                        sp = (sp["latitude"],sp["longitude"])
+                        if not sp in self.pois["spawn_points"]:
+                            self.pois["spawn_points"].add(sp)
+                            newspawnpoints += 1
                 if 'nearby_pokemons' in map_cell:
                     pass#print("nearby_pokemons", map_cell['nearby_pokemons'])
                 if 'catchable_pokemons' in map_cell:
                     pass#print('catchable_pokemons', map_cell['catchable_pokemons'])
         if newpokemon > 0:
             sys.stdout.write("    Found %d new pokemon.\n" % newpokemon)
+            self.scan_stats[level]["wild_pokemon"] += newpokemon
         if newpokestops > 0:
             sys.stdout.write("    Found %d new pokestops.\n" % newpokestops)
         if newgyms > 0:
             sys.stdout.write("    Found %d new gyms.\n" % newgyms)
-        # if len(self.scan_stats.keys()) > 0:
-        #     sys.stdout.write("  Scan stats by level:\n")
-        #     for level, stat in self.scan_stats.iteritems():
-        #         sys.stdout.write('    %s {"wild_pokemons": %d}\n' % (level, stat["wild_pokemons"]))
+        if newspawnpoints > 0:
+            sys.stdout.write("    Found %d new spawnpoints.\n" % newgyms)
+            self.scan_stats[level]["spawn_points"] += newspawnpoints
+        if len(self.scan_stats.keys()) > 0:
+            sys.stdout.write("  Scan stats by level:\n")
+            for level, stat in self.scan_stats.iteritems():
+                sys.stdout.write('    %s {"wild_pokemon": %d, "spawn_points": %d}\n' % (level, stat["wild_pokemon"], stat["spawn_points"]))
         time.sleep(delay)
 
     def prune_expired_pokemon(self):
@@ -389,16 +395,38 @@ class PoGoBot(object):
                 print(pokestop)
             elif len(ret["responses"]["FORT_SEARCH"].keys()) == 1 and ret["responses"]["FORT_SEARCH"]["result"] == 1:
                 status = -1
-        return status
+        return (status, ret["responses"]["FORT_SEARCH"]["result"])
+
+    def test_softban(self, delay):
+        sys.stdout.write("Testing softban...\n")
+        lat, lng, alt = self.api.get_position()
+        nearest = (None, float("inf"))
+        for pid, pokestop in self.pois["pokestops"].iteritems():
+            d = get_distance((pokestop['latitude'], pokestop['longitude']), (lat, lng))
+            if d < nearest[1]:
+                nearest = (pokestop, d)
+        if nearest[0] != None:
+            sys.stdout.write("  Attempting 40 spin fix.\n")
+            sys.stdout.write("    Spin ")
+            spins = 40
+            for i in xrange(spins):
+                sys.stdout.write("%d" % (i+1))
+                s,r = self.spin_pokestop(nearest[0], lat, lng, alt, delay)
+                time.sleep(.5)
+                if s == 1:
+                    break
+                if i < spins-1:
+                    sys.stdout.write(",")
+            sys.stdout.write("\n")
+        self.config["snipe"] = False
 
     def spin_pokestops(self, delay):
         sys.stdout.write("Spinning pokestops...\n")
         lat, lng, alt = self.api.get_position()
-        path_resets = 0
         for pid, pokestop in self.pois["pokestops"].iteritems():
             if get_distance((pokestop['latitude'], pokestop['longitude']), (lat, lng)) < 0.0004435:
                 if not pid in self.visited and not "cooldown_complete_timestamp_ms" in pokestop:
-                    s = self.spin_pokestop(pokestop, lat, lng, alt, delay)
+                    s,r = self.spin_pokestop(pokestop, lat, lng, alt, delay)
                     time.sleep(delay)
                     if s == -1:
                         sys.stdout.write("  Softban detected, attempting 40 spin fix.\n")
@@ -406,7 +434,7 @@ class PoGoBot(object):
                         spins = 40
                         for i in xrange(spins):
                             sys.stdout.write("%d" % (i+1))
-                            s = self.spin_pokestop(pokestop, lat, lng, alt, delay)
+                            s,r = self.spin_pokestop(pokestop, lat, lng, alt, delay)
                             time.sleep(delay)
                             if s == 1:
                                 break
@@ -513,30 +541,32 @@ class PoGoBot(object):
         for fid, fort in self.pois["pokestops"].iteritems():
             if "lure_info" in fort:
                 lat, lng, alt = self.api.get_position()
-                ret = self.api.disk_encounter(encounter_id=fort["lure_info"]["encounter_id"],
-                                              fort_id=fort["lure_info"]["fort_id"],
-                                              player_latitude=lat,
-                                              player_longitude=lng)
-                time.sleep(delay)
                 pokemon = {
+                    "encounter_id": fort["lure_info"]["encounter_id"],
                     "spawn_point_id": fort["lure_info"]["fort_id"],
                     "pokemon_data": {"pokemon_id": fort["lure_info"]["active_pokemon_id"]},
                     "latitude": fort["latitude"],
                     "longitude": fort["longitude"]
                 }
                 pid = get_key_from_pokemon(pokemon)
-                if ret["responses"]["DISK_ENCOUNTER"]["result"] == 1:
-                    pokemon = ret["responses"]["DISK_ENCOUNTER"]
-                    pokemon['encounter_id'] = fort["lure_info"]["encounter_id"]
-                    pokemon["spawn_point_id"] = fort["lure_info"]["fort_id"]
-                    pokemon["latitude"] = fort["latitude"]
-                    pokemon["longitude"] = fort["longitude"]
-                    sys.stdout.write("  Encountered a lured %s...\n" % self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]))
-                    clean.append(self.catch_pokemon(pokemon, "lure", self.balls, delay, pid))
-                elif ret["responses"]["DISK_ENCOUNTER"]["result"] == 2:
-                    self.lure_encounters[pid] = pokemon
-                else:
-                    print(ret)
+                if not pid in self.catches:
+                    ret = self.api.disk_encounter(encounter_id=pokemon["encounter_id"],
+                                                  fort_id=pokemon["spawn_point_id"],
+                                                  player_latitude=lat,
+                                                  player_longitude=lng)
+                    time.sleep(delay)
+                    if ret["responses"]["DISK_ENCOUNTER"]["result"] == 1:
+                        pokemon = ret["responses"]["DISK_ENCOUNTER"]
+                        pokemon['encounter_id'] = fort["lure_info"]["encounter_id"]
+                        pokemon["spawn_point_id"] = fort["lure_info"]["fort_id"]
+                        pokemon["latitude"] = fort["latitude"]
+                        pokemon["longitude"] = fort["longitude"]
+                        sys.stdout.write("  Encountered a lured %s...\n" % self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]))
+                        clean.append(self.catch_pokemon(pokemon, "lure", self.balls, delay, pid))
+                    elif ret["responses"]["DISK_ENCOUNTER"]["result"] == 2:
+                        self.lure_encounters[pid] = pokemon
+                    else:
+                        print(ret)
         for c in clean:
             if c: self.clean_encounter(*c)
 
@@ -710,8 +740,12 @@ class PoGoBot(object):
     def save_config(self):
         sys.stdout.write("Saving config...\n")
         self.config["location"] = self.api.get_position()
+        dump = {}
+        dump.update(self.config)
+        if "snipe" in dump:
+            del dump["snipe"]
         with open("config.json", "w") as out:
-            json.dump(self.config, out, indent=2, sort_keys=True)
+            json.dump(dump, out, indent=2, sort_keys=True)
 
     def load_incubators(self):
         sys.stdout.write("Loading incubators...\n")
@@ -844,7 +878,7 @@ class PoGoBot(object):
         time.sleep(delay)
 
     def play(self):
-        delay = 1
+        delay = .5
         last_map = 0
         self.api.get_player()
         time.sleep(delay)
@@ -880,8 +914,8 @@ class PoGoBot(object):
                 self.load_incubators()
                 self.prune_inventory(delay)
                 self.update_path()
-                self.save_map()
                 self.move(self.config["speed"])
+                self.save_map()
             except pgoapi.exceptions.ServerSideRequestThrottlingException as e:
                 if lastthrottle != None and time.time()-lastthrottle < throttlesleep:
                     throttlesleep += 1

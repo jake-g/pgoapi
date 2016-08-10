@@ -54,15 +54,14 @@ def init_config():
         with open(f, "r") as coordsf:
             coords = json.load(coordsf)
             clean_coords = {}
-            if "bounds" in coords:
-                clean_coords["bounds"] = coords["bounds"]
-            elif "bounds" in config:
-                del config["bounds"]
-            if "location" in coords:
-                clean_coords["location"] = coords["location"]
-            elif "location" in config:
-                del config["location"]
+            for i in ["bounds","location","snipe"]:
+                if i in coords:
+                    clean_coords[i] = coords[i]
+                elif i in config:
+                    del config[i]
             config.update(clean_coords)
+        if "snipe" in config and config["snipe"]!=None:
+            config["location"] = config["snipe"]
 
     # Passed in arguments shoud trump
     for key in args.__dict__:

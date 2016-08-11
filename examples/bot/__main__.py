@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import argparse
+import logging
 
 from geopy.geocoders import GoogleV3
 
@@ -25,6 +26,9 @@ def init_config():
     if os.path.isfile(config_file):
         with open(config_file) as data:
             config.update(json.load(data))
+    if "powerquotient" in config:
+        config["minpq"] = config["powerquotient"]
+        del config["powerquotient"]
 
     # Read passed in Arguments
     required = lambda x: not x in config
@@ -38,8 +42,10 @@ def init_config():
     parser.add_argument("-m", "--minpokemon", type=int, help="Minimum number of pokemon for auto transfing", required=required("minpokemon"))
     parser.add_argument("-s", "--speed", type=float, help="Travel speed in miles per hour", required=required("speed"))
     parser.add_argument("-r", "--radius", type=int, help="S2 Cell search radius", required=required("radius"))
-    parser.add_argument("-q", "--powerquotient", type=int, help="Minimum power quotient for keeping pokemon", required=required("powerquotient"))
+    parser.add_argument("-n", "--noise", help="TPS poission noise")
     parser.add_argument("-d", "--debug", help="Debug Mode", action='store_true')
+    parser.add_argument("--minpq", type=int, help="Minimum power quotient for keeping pokemon", required=required("minpq"))
+    parser.add_argument("--mincp", type=int, help="Minimum combat power for keeping pokemon", required=required("mincp"))
     parser.add_argument("--best_balls_first", action='store_true', help="Prioritize throwing better balls")
     parser.add_argument("--nospin", action='store_true', help="Disable spinning forts")
     parser.add_argument("--nocatch",action='store_true', help="Disable catching pokemon")
@@ -54,15 +60,14 @@ def init_config():
         with open(f, "r") as coordsf:
             coords = json.load(coordsf)
             clean_coords = {}
-            if "bounds" in coords:
-                clean_coords["bounds"] = coords["bounds"]
-            elif "bounds" in config:
-                del config["bounds"]
-            if "location" in coords:
-                clean_coords["location"] = coords["location"]
-            elif "location" in config:
-                del config["location"]
+            for i in ["bounds","location","snipe"]:
+                if i in coords:
+                    clean_coords[i] = coords[i]
+                elif i in config:
+                    del config[i]
             config.update(clean_coords)
+        if "snipe" in config and config["snipe"]!=None:
+            config["location"] = config["snipe"]
 
     # Passed in arguments shoud trump
     for key in args.__dict__:
@@ -81,6 +86,11 @@ def init_config():
 
 if __name__ == '__main__':
 
+    logging.basicConfig(filename="pgoapi.log", level=logging.DEBUG, format='%(asctime)s [%(module)10s] [%(levelname)5s] %(message)s')
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("pgoapi").setLevel(logging.INFO)
+    logging.getLogger("rpc_api").setLevel(logging.INFO)
+
     config = init_config()
     if not config:
         sys.exit(1)
@@ -89,6 +99,11 @@ if __name__ == '__main__':
         config["location"] = get_pos_by_name(config["location"])
         if not config["location"]:
             sys.exit(2)
+
+    if config["debug"]:
+        logging.getLogger("requests").setLevel(logging.DEBUG)
+        logging.getLogger("pgoapi").setLevel(logging.DEBUG)
+        logging.getLogger("rpc_api").setLevel(logging.DEBUG)
 
     bot = PoGoBot(config)
     bot.run()

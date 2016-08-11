@@ -25,7 +25,8 @@
   "nocatch": false,
   "nospin": false,
   "password": "kahdkjsahdjksahjk",
-  "powerquotient": 80,
+  "minpq": 80,
+  "mincp": Infinity,
   "speed": 7,
   "username": "for@bar.baz"
 }

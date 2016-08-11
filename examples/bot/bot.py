@@ -8,7 +8,7 @@ import math as pymath
 import random
 import numpy as np
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../.."))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "../.."))
 from pgoapi import pgoapi
 import pgoapi.exceptions
 

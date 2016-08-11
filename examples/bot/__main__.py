@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import argparse
+import logging
 
 from geopy.geocoders import GoogleV3
 
@@ -85,6 +86,11 @@ def init_config():
 
 if __name__ == '__main__':
 
+    logging.basicConfig(filename="pgoapi.log", level=logging.DEBUG, format='%(asctime)s [%(module)10s] [%(levelname)5s] %(message)s')
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("pgoapi").setLevel(logging.INFO)
+    logging.getLogger("rpc_api").setLevel(logging.INFO)
+
     config = init_config()
     if not config:
         sys.exit(1)
@@ -93,6 +99,11 @@ if __name__ == '__main__':
         config["location"] = get_pos_by_name(config["location"])
         if not config["location"]:
             sys.exit(2)
+
+    if config["debug"]:
+        logging.getLogger("requests").setLevel(logging.DEBUG)
+        logging.getLogger("pgoapi").setLevel(logging.DEBUG)
+        logging.getLogger("rpc_api").setLevel(logging.DEBUG)
 
     bot = PoGoBot(config)
     bot.run()

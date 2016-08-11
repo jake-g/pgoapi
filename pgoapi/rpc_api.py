@@ -67,6 +67,14 @@ class RpcApi:
         """ mystic unknown6 - revolved by PokemonGoDev """
         self._signature_gen = False
         self._signature_lib = None
+        self._signature_info = {
+            "DeviceInfo": {
+                "device_brand": "",
+                "device_model": "",
+                "hardware_manufacturer": "",
+                "hardware_model": ""
+            }
+        }
 
         if RpcApi.START_TIME == 0:
             RpcApi.START_TIME = get_time(ms=True)
@@ -206,6 +214,12 @@ class RpcApi:
             sig.unk22 = os.urandom(32)
             sig.timestamp = get_time(ms=True)
             sig.timestamp_since_start = get_time(ms=True) - RpcApi.START_TIME
+
+            if "DeviceInfo" in self._signature_info.keys():
+                if "device_brand" in self._signature_info["DeviceInfo"]:
+                    sig.DeviceInfo.device_brand = self._signature_info["DeviceInfo"]["device_brand"]
+                if "device_model" in self._signature_info["DeviceInfo"]:
+                    sig.DeviceInfo.device_model = self._signature_info["DeviceInfo"]["device_model"]
 
             signature_proto = sig.SerializeToString()
 

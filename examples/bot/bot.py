@@ -72,6 +72,15 @@ class PoGoBot(object):
         self.api.set_authentication(provider=self.config["auth_service"],
                                     username=self.config["username"],
                                     password=self.config["password"])
+        self.api._signature_info = {
+            "DeviceInfo": {
+                "device_brand": self.config["device_brand"],
+                "device_model": self.config["device_model"],
+                "hardware_manufacturer": self.config["hardware_manufacturer"],
+                "hardware_model": self.config["hardware_model"],
+                "firmware_brand": self.config["firmware_brand"]
+            }
+        }
         self.api.activate_signature(os.path.expanduser(self.config["encrypt"]))
         self.angle = random.uniform(0,360)
 
@@ -614,7 +623,10 @@ class PoGoBot(object):
                     sys.stdout.write("    Prioritizing pokestop with lure...\n")
                     i = min(lures)
                 else:
-                    i = np.random.poisson(self.config["noise"],1)[0]
+                    while True:
+                        i = np.random.poisson(self.config["noise"],1)[0]
+                        if i < len(tour):
+                            break
                 self.target = fids[tour[i]]
         remove = []
         for k,v in self.visited.iteritems():

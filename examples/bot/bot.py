@@ -6,9 +6,10 @@ import time
 import json
 import math as pymath
 import random
+import operator
 import numpy as np
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../.."))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "../.."))
 from pgoapi import pgoapi
 import pgoapi.exceptions
 
@@ -95,11 +96,6 @@ class PoGoBot(object):
             self.family_ids = json.load(infile)
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data/evoreq.json"), "r") as infile:
             self.evoreq = json.load(infile)
-
-        seen = set()
-        seen_add = seen.add
-        seen_twice = set(x for x in self.family_ids.values() if x in seen or seen_add(x))
-        self.evolvables = map(str, seen_twice)
 
         self.coords = [{'latitude': self.config["location"][0], 'longitude': self.config["location"][1]}]
         self.catches = []
@@ -781,24 +777,30 @@ class PoGoBot(object):
     def process_candies(self):
         sys.stdout.write("Processing candies...\n")
         self.enabled_evolutions = {}
-        if len(self.inventory["candies"]) > 0:
-            for family, count in self.inventory["candies"].iteritems():
-                if family in self.evoreq:
-                    evos, extra = divmod(count, self.evoreq[family])
+        if len(self.inventory["candies"].keys()) > 0:
+            candies = {}
+            candies.update(self.inventory["candies"])
+            for pid, req in sorted(self.evoreq.items(), key=operator.itemgetter(1), reverse=True):
+                fid = str(self.family_ids[pid])
+                if fid in candies.keys():
+                    evos, extra = divmod(candies[fid], req)
                     if evos > 0:
-                        self.enabled_evolutions[family] = evos
+                        self.enabled_evolutions[pid] = evos
+                        candies[fid] -= evos
             if len(self.enabled_evolutions.keys()) > 0:
                 sys.stdout.write("  Candy cost met for evolutions:\n")
-                for family, evos in self.enabled_evolutions.iteritems():
-                    extra = ""
-                    isize = 0
-                    if family in self.inventory["pokemon"]:
-                        isize = len(self.inventory["pokemon"][family])
-                        if isize < evos:
-                            extra = " (%d more pokemon needed)" % (evos-isize)
-                    else:
-                        extra = " (%d more pokemon needed)" % evos
-                    sys.stdout.write("    %d x %s%s\n" % (evos, self.pokemon_id_to_name(self.family_ids[str(family)]), extra))
+                for pid, req in sorted(self.evoreq.items(), key=operator.itemgetter(1), reverse=True):
+                    if pid in self.enabled_evolutions.keys():
+                        evos = self.enabled_evolutions[pid]
+                        extra = ""
+                        isize = 0
+                        if pid in self.inventory["pokemon"]:
+                            isize = len(self.inventory["pokemon"][pid])
+                            if isize < evos:
+                                extra = " (%d more pokemon needed)" % (evos-isize)
+                        else:
+                            extra = " (%d more pokemon needed)" % evos
+                        sys.stdout.write("    %d x %s%s\n" % (evos, self.pokemon_id_to_name(int(pid)), extra))
 
     def transfer_pokemon(self, delay):
         t = 0
@@ -808,7 +810,7 @@ class PoGoBot(object):
             for pid in self.inventory["pokemon"]:
                 if "whitelist" in self.config and pid in self.config["whitelist"]:
                     continue
-                if pid in self.evolvables:
+                if pid in self.evoreq.keys():
                     if pid not in self.enabled_evolutions:
                         for pokemon in self.inventory["pokemon"][pid]:
                             pq = self.calc_pq(pokemon)
@@ -845,7 +847,7 @@ class PoGoBot(object):
         if len(self.inventory["eggs"]) + sum([len(self.inventory["pokemon"][p]) for p in self.inventory["pokemon"]]) == self.player["max_pokemon_storage"]:
             sys.stdout.write("Evolving pokemon...\n")
             for pid, evos in self.enabled_evolutions.iteritems():
-                if pid in self.inventory["pokemon"] and self.evoreq[pid] < 50:
+                if pid in self.inventory["pokemon"] and self.evoreq[pid] < 25:
                     while evos > 0 and len(self.inventory["pokemon"][pid]) > 0:
                         lowcost.append(self.inventory["pokemon"][pid].pop())
                         evos -= 1

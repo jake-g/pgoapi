@@ -74,11 +74,11 @@ class PoGoBot(object):
                                     password=self.config["password"])
         self.api._signature_info = {
             "DeviceInfo": {
-                "device_brand": self.config["device_brand"],
-                "device_model": self.config["device_model"],
-                "hardware_manufacturer": self.config["hardware_manufacturer"],
-                "hardware_model": self.config["hardware_model"],
-                "firmware_brand": self.config["firmware_brand"]
+                "device_brand": self.config["device_brand"] if "device_brand" in self.config else "",
+                "device_model": self.config["device_model"] if "device_model" in self.config else "",
+                "hardware_manufacturer": self.config["hardware_manufacturer"] if "hardware_manufacturer" in self.config else "",
+                "hardware_model": self.config["hardware_model"] if "hardware_model" in self.config else "",
+                "firmware_brand": self.config["firmware_brand"] if "firmware_brand" in self.config else ""
             }
         }
         self.api.activate_signature(os.path.expanduser(self.config["encrypt"]))

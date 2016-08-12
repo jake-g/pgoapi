@@ -925,7 +925,7 @@ class PoGoBot(object):
                     self.prune_expired_pokemon()
                     if not self.config["nocatch"] and len(self.balls) > 0:
                         self.catch_wild_pokemon(delay)
-                        self.catch_incense_pokemon(delay)
+                        # self.catch_incense_pokemon(delay)
                         self.catch_lure_pokemon(delay)
                     if not self.config["nospin"]:
                         self.spin_pokestops(1)

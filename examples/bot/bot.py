@@ -715,7 +715,7 @@ class PoGoBot(object):
         #         map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
         #     else:
         #         map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/green-circle.png")
-        
+
         for _, gym in self.pois["gyms"].iteritems():
             map.add_point((gym['latitude'], gym['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/blue-circle.png")
         # for _, pokemon in self.pois["pokemon"].iteritems():
@@ -854,7 +854,7 @@ class PoGoBot(object):
             sys.stdout.write("  Found %d low cost pokemon evolutions...\n" % len(lowcost))
             evolveable_pokemon = [] + lowcost
             sys.stdout.write("  There are %d total evolveable pokemon...\n" % len(evolveable_pokemon))
-            if len(evolveable_pokemon) > 100 and "301" in self.inventory["items"]:
+            if len(evolveable_pokemon) > 80 and "301" in self.inventory["items"]:
                 sys.stdout.write("  Using a lucky egg...")
                 ret = self.api.use_item_xp_boost(item_id=301)
                 if ret["responses"]["USE_ITEM_XP_BOOST"]["result"] == 1:
@@ -907,7 +907,7 @@ class PoGoBot(object):
                     self.spin_pokestops(1)
                 if not self.config["nocatch"] and len(self.balls) > 0:
                     self.catch_wild_pokemon(delay)
-                    self.catch_incense_pokemon(delay)
+                    # self.catch_incense_pokemon(delay)
                     self.catch_lure_pokemon(delay)
                 self.load_incubators()
                 self.prune_inventory(delay)

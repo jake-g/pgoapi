@@ -718,22 +718,22 @@ class PoGoBot(object):
 
         if "snipe" in self.config and self.config["snipe"] != None:
             map.add_point((self.config["snipe"][0], self.config["snipe"][1]), "http://maps.google.com/mapfiles/ms/icons/red.png")
-        # for spin in self.spins:
-        #     map.add_point((spin['latitude'], spin['longitude']), "http://maps.google.com/mapfiles/ms/icons/blue.png")
-        # for sp in self.pois["spawn_points"]:
-        #     map.add_point(sp, "http://www.andrew.cmu.edu/user/rhope/darkgray-dot-4x4.png")
-        # for _, pokestop in self.pois["pokestops"].iteritems():
-        #     if pokestop["id"] in self.visited:
-        #         map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
-        #     else:
-        #         if 'active_fort_modifier' in pokestop:
-        #             map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
-        #         else:
-        #             map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/green-circle.png")
-        # for _, gym in self.pois["gyms"].iteritems():
-        #     map.add_point((gym['latitude'], gym['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/blue-circle.png")
-        # for _, pokemon in self.pois["pokemon"].iteritems():
-        #     map.add_point((pokemon['latitude'], pokemon['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
+        for spin in self.spins:
+            map.add_point((spin['latitude'], spin['longitude']), "http://maps.google.com/mapfiles/ms/icons/blue.png")
+        for sp in self.pois["spawn_points"]:
+            map.add_point(sp, "http://www.andrew.cmu.edu/user/rhope/darkgray-dot-4x4.png")
+        for _, pokestop in self.pois["pokestops"].iteritems():
+            if pokestop["id"] in self.visited:
+                map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
+            else:
+                if 'active_fort_modifier' in pokestop:
+                    map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
+                else:
+                    map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/green-circle.png")
+        for _, gym in self.pois["gyms"].iteritems():
+            map.add_point((gym['latitude'], gym['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/blue-circle.png")
+        for _, pokemon in self.pois["pokemon"].iteritems():
+            map.add_point((pokemon['latitude'], pokemon['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
         # for _, sp in self.spawnpoints.iteritems():
         #     map.add_point((sp['latitude'], sp['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
         if self.target:

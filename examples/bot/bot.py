@@ -706,8 +706,8 @@ class PoGoBot(object):
             lat = catch["latitude"]
             lng = catch["longitude"]
             map.add_point((lat, lng), "http://pokeapi.co/media/sprites/pokemon/%d.png" % pid)
-        for spin in self.spins:
-            map.add_point((spin['latitude'], spin['longitude']), "http://maps.google.com/mapfiles/ms/icons/blue.png")
+        # for spin in self.spins:
+        #     map.add_point((spin['latitude'], spin['longitude']), "http://maps.google.com/mapfiles/ms/icons/blue.png")
         # for sp in self.pois["spawn_points"]:
         #     map.add_point(sp, "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
         # for _, pokestop in self.pois["pokestops"].iteritems():
@@ -808,8 +808,8 @@ class PoGoBot(object):
             sys.stdout.write("Transfering pokemon...\n")
             transferable_pokemon = []
             for pid in self.inventory["pokemon"]:
-                if "whitelist" in self.config and pid in self.config["whitelist"]:
-                    continue
+                # if "whitelist" in self.config and pid in self.config["whitelist"]:
+                #     continue
                 if pid in self.evoreq.keys():
                     if pid not in self.enabled_evolutions:
                         for pokemon in self.inventory["pokemon"][pid]:

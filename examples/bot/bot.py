@@ -66,8 +66,6 @@ class PoGoBot(object):
 
     def __init__(self, config):
         self.config = config
-        self.softbanned = False
-        self.unsoftban = 0
         self.api = pgoapi.PGoApi()
         # loc = self.config["location"].split(',').append('0')
         # loc = map(float, loc)
@@ -107,6 +105,11 @@ class PoGoBot(object):
         self.scan_stats = {}
         self.cell_timestamps = {}
         self.incense_encounters = {}
+
+        if "snipe" in self.config and self.config["snipe"] != None:
+            self.softbanned = True
+        else:
+            self.softbanned = False
 
         self.last_move_time = time.time()
         self.change_dir_time = self.last_move_time + random.uniform(60,300)
@@ -300,7 +303,10 @@ class PoGoBot(object):
     def get_pois(self, delay):
         sys.stdout.write("Getting POIs...\n")
         lat, lng, alt = self.api.get_position()
-        level = random.randint(15,17)
+        if self.softbanned:
+            level = 15
+        else:
+            level = random.randint(15,17)
         if not level in self.scan_stats:
             self.scan_stats[level] = {"wild_pokemon": 0, "spawn_points": 0}
         cell_ids = self.get_cell_ids(lat, lng, level=level, radius=self.config["radius"])
@@ -376,7 +382,7 @@ class PoGoBot(object):
                 del self.pois["pokemon"][k]
             sys.stdout.write("  %d pokemon expired.\n" % len(expired))
 
-    def spin_pokestop(self, pokestop, lat, lng, alt, delay):
+    def spin_pokestop(self, pokestop, lat, lng, alt, delay, clear=False):
         status = 0
         ret = self.api.fort_search(fort_id=pokestop['id'], fort_latitude=pokestop['latitude'], fort_longitude=pokestop['longitude'], player_latitude=lat, player_longitude=lng)
         if "experience_awarded" in ret["responses"]["FORT_SEARCH"]:
@@ -384,6 +390,8 @@ class PoGoBot(object):
             self.visited[pokestop["id"]] = time.time()
             if pokestop["id"] == self.target:
                 self.target = None
+            if clear:
+                sys.stdout.write("\n")
             sys.stdout.write("  Spun pokestop and got:\n")
             xp = ret["responses"]["FORT_SEARCH"]["experience_awarded"]
             sys.stdout.write("    Experience: %d\n" % xp)
@@ -405,7 +413,7 @@ class PoGoBot(object):
                 status = -1
         return (status, ret["responses"]["FORT_SEARCH"]["result"])
 
-    def test_softban(self, delay):
+    def unsoftban(self, delay):
         sys.stdout.write("Testing softban...\n")
         lat, lng, alt = self.api.get_position()
         nearest = (None, float("inf"))
@@ -414,19 +422,20 @@ class PoGoBot(object):
             if d < nearest[1]:
                 nearest = (pokestop, d)
         if nearest[0] != None:
+            self.api.set_position(nearest[0]['latitude'], nearest[0]['longitude'], alt)
             sys.stdout.write("  Attempting 40 spin fix.\n")
             sys.stdout.write("    Spin ")
             spins = 40
             for i in xrange(spins):
                 sys.stdout.write("%d" % (i+1))
-                s,r = self.spin_pokestop(nearest[0], lat, lng, alt, delay)
-                time.sleep(.5)
+                s,r = self.spin_pokestop(nearest[0], lat, lng, alt, delay, True)
+                print(s,r)
+                time.sleep(.25)
                 if s == 1:
+                    self.softbanned = False
                     break
                 if i < spins-1:
                     sys.stdout.write(",")
-            sys.stdout.write("\n")
-        self.config["snipe"] = False
 
     def spin_pokestops(self, delay):
         sys.stdout.write("Spinning pokestops...\n")
@@ -706,18 +715,23 @@ class PoGoBot(object):
             lat = catch["latitude"]
             lng = catch["longitude"]
             map.add_point((lat, lng), "http://pokeapi.co/media/sprites/pokemon/%d.png" % pid)
+
+        if "snipe" in self.config and self.config["snipe"] != None:
+            map.add_point((self.config["snipe"][0], self.config["snipe"][1]), "http://maps.google.com/mapfiles/ms/icons/red.png")
         # for spin in self.spins:
         #     map.add_point((spin['latitude'], spin['longitude']), "http://maps.google.com/mapfiles/ms/icons/blue.png")
         # for sp in self.pois["spawn_points"]:
-        #     map.add_point(sp, "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
+        #     map.add_point(sp, "http://www.andrew.cmu.edu/user/rhope/darkgray-dot-4x4.png")
         # for _, pokestop in self.pois["pokestops"].iteritems():
         #     if pokestop["id"] in self.visited:
-        #         map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
+        #         map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
         #     else:
-        #         map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/green-circle.png")
-
-        for _, gym in self.pois["gyms"].iteritems():
-            map.add_point((gym['latitude'], gym['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/blue-circle.png")
+        #         if 'active_fort_modifier' in pokestop:
+        #             map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
+        #         else:
+        #             map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/green-circle.png")
+        # for _, gym in self.pois["gyms"].iteritems():
+        #     map.add_point((gym['latitude'], gym['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/blue-circle.png")
         # for _, pokemon in self.pois["pokemon"].iteritems():
         #     map.add_point((pokemon['latitude'], pokemon['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
         # for _, sp in self.spawnpoints.iteritems():
@@ -835,7 +849,7 @@ class PoGoBot(object):
             for pokemon, pq in transferable_pokemon:
                 ret = self.api.release_pokemon(pokemon_id=pokemon["pokemon_data"]["id"])
                 if ret and "RELEASE_POKEMON" in ret['responses'] and ret["responses"]["RELEASE_POKEMON"]["result"] == 1:
-                    sys.stdout.write("  A %d PQ %d CP %s was released.\n" % (pq, pokemon["pokemon_data"]["cp"], self.pokemon_id_to_name(self.family_ids[str(pokemon["pokemon_data"]["pokemon_id"])])))
+                    sys.stdout.write("  A %d PQ %d CP %s was released.\n" % (pq, pokemon["pokemon_data"]["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"])))
                     t += 1
                 time.sleep(delay)
         return t
@@ -885,34 +899,40 @@ class PoGoBot(object):
         self.save_map()
         while True:
             try:
-                self.save_config()
-                hatched = self.get_hatched_eggs(delay)
-                self.get_trainer_info(hatched, delay)
-                self.get_rewards(delay)
-                self.process_candies()
-                if self.evolve_pokemon(delay):
-                    self.last_move_time = time.time()
-                    continue
-                if self.config["minpokemon"] >= 0:
-                    if self.transfer_pokemon(delay):
+                if self.softbanned:
+                    self.get_trainer_info(None, delay)
+                if not self.softbanned:
+                    self.save_config()
+                    hatched = self.get_hatched_eggs(delay)
+                    self.get_trainer_info(hatched, delay)
+                    self.get_rewards(delay)
+                    self.process_candies()
+                    if self.evolve_pokemon(delay):
                         self.last_move_time = time.time()
                         continue
-                self.kill_time(delay)
+                    if self.config["minpokemon"] >= 0:
+                        if self.transfer_pokemon(delay):
+                            self.last_move_time = time.time()
+                            continue
+                    self.kill_time(delay)
                 if last_map + 5 < time.time():
                     self.get_pois(delay)
                     last_map = time.time()
-                self.prune_expired_pokemon()
-                self.kill_time(delay)
-                if not self.config["nospin"]:
-                    self.spin_pokestops(1)
-                if not self.config["nocatch"] and len(self.balls) > 0:
-                    self.catch_wild_pokemon(delay)
-                    # self.catch_incense_pokemon(delay)
-                    self.catch_lure_pokemon(delay)
-                self.load_incubators()
-                self.prune_inventory(delay)
-                self.update_path()
-                self.move(self.config["speed"])
+                    self.kill_time(delay)
+                else:
+                    self.unsoftban(delay)
+                if not self.softbanned:
+                    self.prune_expired_pokemon()
+                    if not self.config["nocatch"] and len(self.balls) > 0:
+                        self.catch_wild_pokemon(delay)
+                        self.catch_incense_pokemon(delay)
+                        self.catch_lure_pokemon(delay)
+                    if not self.config["nospin"]:
+                        self.spin_pokestops(1)
+                    self.load_incubators()
+                    self.prune_inventory(delay)
+                    self.update_path()
+                    self.move(self.config["speed"])
                 self.save_map()
             except pgoapi.exceptions.ServerSideRequestThrottlingException as e:
                 if lastthrottle != None and time.time()-lastthrottle < throttlesleep:

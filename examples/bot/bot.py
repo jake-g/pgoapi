@@ -852,7 +852,9 @@ class PoGoBot(object):
         if len(self.inventory["eggs"]) + sum([len(self.inventory["pokemon"][p]) for p in self.inventory["pokemon"]]) == self.player["max_pokemon_storage"]:
             sys.stdout.write("Evolving pokemon...\n")
             for pid, evos in self.enabled_evolutions.iteritems():
-                if pid in self.inventory["pokemon"] and self.evoreq[pid] < 25:
+                if "whitelist" in self.config and pid in self.config["whitelist"]:
+                    continue
+                if pid in self.inventory["pokemon"] and self.evoreq[pid] <= 25:
                     while evos > 0 and len(self.inventory["pokemon"][pid]) > 0:
                         lowcost.append(self.inventory["pokemon"][pid].pop())
                         evos -= 1

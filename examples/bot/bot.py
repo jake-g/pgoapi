@@ -299,10 +299,7 @@ class PoGoBot(object):
     def get_pois(self, delay):
         sys.stdout.write("Getting POIs...\n")
         lat, lng, alt = self.api.get_position()
-        if self.softbanned:
-            level = 15
-        else:
-            level = random.randint(15,17)
+        level = 15
         if not level in self.scan_stats:
             self.scan_stats[level] = {"wild_pokemon": 0, "spawn_points": 0}
         cell_ids = self.get_cell_ids(lat, lng, level=level, radius=self.config["radius"])
@@ -709,7 +706,7 @@ class PoGoBot(object):
             pid = catch["pokemon_data"]["pokemon_id"]
             lat = catch["latitude"]
             lng = catch["longitude"]
-            map.add_point((lat, lng), "http://pokeapi.co/media/sprites/pokemon/%d.png" % pid)
+            map.add_point((lat, lng), "https://img.pokemondb.net/sprites/black-white/normal/%s.png" % self.pokemon_id_to_name(pid).lower())
         if "snipe" in self.config and self.config["snipe"] != None:
             map.add_point((self.config["snipe"][0], self.config["snipe"][1]), "http://maps.google.com/mapfiles/ms/icons/red.png")
         for spin in self.spins:
@@ -909,13 +906,13 @@ class PoGoBot(object):
                             self.last_move_time = time.time()
                             continue
                     self.kill_time(delay)
-                if last_map + 5 < time.time():
+                if last_map + 10 < time.time():
                     self.get_pois(delay)
                     last_map = time.time()
                     self.kill_time(delay)
-                else:
+                if self.softbanned:
                     self.unsoftban(delay)
-                if not self.softbanned:
+                else:
                     self.prune_expired_pokemon()
                     if not self.config["nocatch"] and len(self.balls) > 0:
                         self.catch_wild_pokemon(delay)

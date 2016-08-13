@@ -257,18 +257,21 @@ class PoGoBot(object):
         candy = 0
         xp = 0
         sys.stdout.write("Getting hatched eggs...\n")
-        ret = self.api.get_hatched_eggs()
-        if 'pokemon_id' in ret["responses"]["GET_HATCHED_EGGS"]:
-            hatched = (
-                ret["responses"]["GET_HATCHED_EGGS"]["pokemon_id"],
-                ret["responses"]["GET_HATCHED_EGGS"]["stardust_awarded"],
-                ret["responses"]["GET_HATCHED_EGGS"]["candy_awarded"],
-                ret["responses"]["GET_HATCHED_EGGS"]["experience_awarded"]
-            )
-        else:
-            hatched = None
-        time.sleep(delay)
-        return hatched
+        try:
+            ret = self.api.get_hatched_eggs()
+            if 'pokemon_id' in ret["responses"]["GET_HATCHED_EGGS"]:
+                hatched = (
+                    ret["responses"]["GET_HATCHED_EGGS"]["pokemon_id"],
+                    ret["responses"]["GET_HATCHED_EGGS"]["stardust_awarded"],
+                    ret["responses"]["GET_HATCHED_EGGS"]["candy_awarded"],
+                    ret["responses"]["GET_HATCHED_EGGS"]["experience_awarded"]
+                )
+            else:
+                hatched = None
+            time.sleep(delay)
+            return hatched
+        except IndexError:
+            return None
 
     def get_rewards(self, delay):
         sys.stdout.write("Getting level-up rewards...\n")

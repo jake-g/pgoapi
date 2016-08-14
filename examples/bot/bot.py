@@ -564,14 +564,13 @@ class PoGoBot(object):
                                                   player_longitude=lng)
                     time.sleep(delay)
                     if ret["responses"]["DISK_ENCOUNTER"]["result"] == 1:
-                        print(ret)
                         pokemon = ret["responses"]["DISK_ENCOUNTER"]
                         pokemon['encounter_id'] = fort["lure_info"]["encounter_id"]
                         pokemon["spawn_point_id"] = fort["lure_info"]["fort_id"]
                         pokemon["latitude"] = fort["latitude"]
                         pokemon["longitude"] = fort["longitude"]
                         pcap =  ret["responses"]["DISK_ENCOUNTER"]['capture_probability']
-                        sys.stdout.write("  Encountered a lured %s...\n" % self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]))
+                        sys.stdout.write("  Encountered a %d PQ %d CP lured %s...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"])))
                         clean.append(self.catch_pokemon(pokemon, "lure", self.balls, delay, pid, pcap))
                     else:
                         print(ret)
@@ -595,9 +594,9 @@ class PoGoBot(object):
                                              encounter_location=pokemon["spawn_point_id"])
             time.sleep(delay)
             if ret["responses"]["INCENSE_ENCOUNTER"]["result"] == 1:
-                print(ret)
-                sys.stdout.write("  Encountered an incense %s...\n" % self.pokemon_id_to_name(pokemon["pokemon_id"]))
-                clean.append(self.catch_pokemon(pokemon, "incense", self.balls, delay, pid))
+                pcap =  ret["responses"]["INCENSE_ENCOUNTER"]['capture_probability']
+                sys.stdout.write("  Encountered an %d PQ %d CP incense %s...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_id"])))
+                clean.append(self.catch_pokemon(pokemon, "incense", self.balls, delay, pid, pcap))
             else:
                 print(ret)
         for c in clean:
@@ -709,7 +708,7 @@ class PoGoBot(object):
             pid = catch["pokemon_data"]["pokemon_id"]
             lat = catch["latitude"]
             lng = catch["longitude"]
-            map.add_point((lat, lng), "https://img.pokemondb.net/sprites/black-white/normal/%s.png" % self.pokemon_id_to_name(pid).lower())
+            map.add_point((lat, lng), "https://img.pokemondb.net/sprites/black-white/normal/%s.png" % self.pokemon_id_to_name(pid).lower().replace("'",""))
         if "snipe" in self.config and self.config["snipe"] != None:
             map.add_point((self.config["snipe"][0], self.config["snipe"][1]), "http://maps.google.com/mapfiles/ms/icons/red.png")
         for spin in self.spins:
@@ -914,7 +913,7 @@ class PoGoBot(object):
                     last_map = time.time()
                     self.kill_time(delay)
                 if self.softbanned:
-                    self.unsoftban(.1)
+                    self.unsoftban(.025)
                 if not self.softbanned:
                     self.prune_expired_pokemon()
                     if not self.config["nocatch"] and len(self.balls) > 0:

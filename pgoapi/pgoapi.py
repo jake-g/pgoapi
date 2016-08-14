@@ -264,6 +264,8 @@ class PGoApiRequest:
                 raise
 
             time.sleep(1)
+            if response == None:
+                execute = True
 
         # cleanup after call execution
         self.log.info('Cleanup of request!')

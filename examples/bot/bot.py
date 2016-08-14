@@ -422,9 +422,8 @@ class PoGoBot(object):
             for i in xrange(spins):
                 sys.stdout.write("%d" % (i+1))
                 s,r = self.spin_pokestop(nearest[0], lat, lng, alt, delay, True)
-                print(s,r)
                 time.sleep(.25)
-                if s == 1:
+                if s != -1:
                     self.softbanned = False
                     break
                 if i < spins-1:
@@ -535,7 +534,7 @@ class PoGoBot(object):
             time.sleep(delay)
             if ret["responses"]["ENCOUNTER"]["status"] == 1:
                 pokemon = ret["responses"]["ENCOUNTER"]["wild_pokemon"]
-                sys.stdout.write("  Encountered a wild %s...\n" % self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]))
+                sys.stdout.write("  Encountered a %d PQ %d CP wild %s...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"])))
                 clean.append(self.catch_pokemon(pokemon, "wild", self.balls, delay, pid))
             else:
                 print(ret)
@@ -813,7 +812,7 @@ class PoGoBot(object):
             sys.stdout.write("Transfering pokemon...\n")
             transferable_pokemon = []
             for pid in self.inventory["pokemon"]:
-                if "whitelist" in self.config and pid in self.config["whitelist"]:
+                if "whitelist" in self.config and str(pid) in map(str,self.config["whitelist"]):
                     continue
                 if pid in self.evoreq.keys():
                     if pid not in self.enabled_evolutions:
@@ -852,14 +851,20 @@ class PoGoBot(object):
         if len(self.inventory["eggs"]) + sum([len(self.inventory["pokemon"][p]) for p in self.inventory["pokemon"]]) == self.player["max_pokemon_storage"]:
             sys.stdout.write("Evolving pokemon...\n")
             for pid, evos in self.enabled_evolutions.iteritems():
-                if "whitelist" in self.config and pid in self.config["whitelist"]:
-                    continue
                 if pid in self.inventory["pokemon"] and self.evoreq[pid] <= 25:
                     while evos > 0 and len(self.inventory["pokemon"][pid]) > 0:
                         lowcost.append(self.inventory["pokemon"][pid].pop())
                         evos -= 1
+                else:
+                    if pid in self.inventory["pokemon"]:
+                        for pokemon in self.inventory["pokemon"][pid]:
+                            if "whitelist" in self.config and str(pid) in map(str,self.config["whitelist"]):
+                                if self.calc_pq(pokemon) > self.config["minpq"]:
+                                    evolveable_pokemon.append(pokemon)
+                            else:
+                                evolveable_pokemon.append(pokemon)
             sys.stdout.write("  Found %d low cost pokemon evolutions...\n" % len(lowcost))
-            evolveable_pokemon = [] + lowcost
+            evolveable_pokemon = evolveable_pokemon + lowcost
             sys.stdout.write("  There are %d total evolveable pokemon...\n" % len(evolveable_pokemon))
             if len(evolveable_pokemon) > 100 and "301" in self.inventory["items"]:
                 sys.stdout.write("  Using a lucky egg...")

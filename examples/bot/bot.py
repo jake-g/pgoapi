@@ -570,7 +570,7 @@ class PoGoBot(object):
                         pokemon["spawn_point_id"] = fort["lure_info"]["fort_id"]
                         pokemon["latitude"] = fort["latitude"]
                         pokemon["longitude"] = fort["longitude"]
-                        pcap =  ret["responses"]["ENCOUNTER"]['capture_probability']
+                        pcap =  ret["responses"]["DISK_ENCOUNTER"]['capture_probability']
                         sys.stdout.write("  Encountered a lured %s...\n" % self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]))
                         clean.append(self.catch_pokemon(pokemon, "lure", self.balls, delay, pid, pcap))
                     else:

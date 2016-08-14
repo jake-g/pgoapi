@@ -422,7 +422,7 @@ class PoGoBot(object):
             for i in xrange(spins):
                 sys.stdout.write("%d" % (i+1))
                 s,r = self.spin_pokestop(nearest[0], lat, lng, alt, delay, True)
-                time.sleep(.25)
+                time.sleep(delay)
                 if s != -1:
                     self.softbanned = False
                     break
@@ -457,13 +457,13 @@ class PoGoBot(object):
         elif kind == "wild" and upid in self.pois["pokemon"].keys():
             del self.pois["pokemon"][upid]
 
-    def catch_pokemon(self, pokemon, kind, balls, delay, upid=None):
+    def catch_pokemon(self, pokemon, kind, balls, delay, upid=None, pcap=None):
         minball = 1
         eid = pokemon["encounter_id"]
         spid = pokemon["spawn_point_id"]
         pid = pokemon["pokemon_data"]["pokemon_id"]
-        if "capture_probability" in pokemon:
-            pcap = pokemon["capture_probability"]["capture_probability"][0]
+        if pcap and "capture_probability" in pcap:
+            pcap = pcap["capture_probability"][0]
             sys.stdout.write("    Pokeball capture probability is %.2f...\n" % pcap)
             if pcap < .25 and "701" in self.inventory["items"]:
                 sys.stdout.write("      Using a %s..." % self.item_names["701"])
@@ -534,8 +534,9 @@ class PoGoBot(object):
             time.sleep(delay)
             if ret["responses"]["ENCOUNTER"]["status"] == 1:
                 pokemon = ret["responses"]["ENCOUNTER"]["wild_pokemon"]
+                pcap =  ret["responses"]["ENCOUNTER"]['capture_probability']
                 sys.stdout.write("  Encountered a %d PQ %d CP wild %s...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"])))
-                clean.append(self.catch_pokemon(pokemon, "wild", self.balls, delay, pid))
+                clean.append(self.catch_pokemon(pokemon, "wild", self.balls, delay, pid, pcap))
             else:
                 print(ret)
         for c in clean:
@@ -563,13 +564,15 @@ class PoGoBot(object):
                                                   player_longitude=lng)
                     time.sleep(delay)
                     if ret["responses"]["DISK_ENCOUNTER"]["result"] == 1:
+                        print(ret)
                         pokemon = ret["responses"]["DISK_ENCOUNTER"]
                         pokemon['encounter_id'] = fort["lure_info"]["encounter_id"]
                         pokemon["spawn_point_id"] = fort["lure_info"]["fort_id"]
                         pokemon["latitude"] = fort["latitude"]
                         pokemon["longitude"] = fort["longitude"]
+                        pcap =  ret["responses"]["ENCOUNTER"]['capture_probability']
                         sys.stdout.write("  Encountered a lured %s...\n" % self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]))
-                        clean.append(self.catch_pokemon(pokemon, "lure", self.balls, delay, pid))
+                        clean.append(self.catch_pokemon(pokemon, "lure", self.balls, delay, pid, pcap))
                     else:
                         print(ret)
         for c in clean:
@@ -592,6 +595,7 @@ class PoGoBot(object):
                                              encounter_location=pokemon["spawn_point_id"])
             time.sleep(delay)
             if ret["responses"]["INCENSE_ENCOUNTER"]["result"] == 1:
+                print(ret)
                 sys.stdout.write("  Encountered an incense %s...\n" % self.pokemon_id_to_name(pokemon["pokemon_id"]))
                 clean.append(self.catch_pokemon(pokemon, "incense", self.balls, delay, pid))
             else:
@@ -904,22 +908,14 @@ class PoGoBot(object):
                     hatched = self.get_hatched_eggs(delay)
                     self.get_trainer_info(hatched, delay)
                     self.get_rewards(delay)
-                    self.process_candies()
-                    if self.evolve_pokemon(delay):
-                        self.last_move_time = time.time()
-                        continue
-                    if self.config["minpokemon"] >= 0:
-                        if self.transfer_pokemon(delay):
-                            self.last_move_time = time.time()
-                            continue
                     self.kill_time(delay)
                 if last_map + 10 < time.time():
                     self.get_pois(delay)
                     last_map = time.time()
                     self.kill_time(delay)
                 if self.softbanned:
-                    self.unsoftban(delay)
-                else:
+                    self.unsoftban(.1)
+                if not self.softbanned:
                     self.prune_expired_pokemon()
                     if not self.config["nocatch"] and len(self.balls) > 0:
                         self.catch_wild_pokemon(delay)
@@ -928,6 +924,14 @@ class PoGoBot(object):
                     if not self.config["nospin"]:
                         self.spin_pokestops(1)
                     self.load_incubators()
+                    self.process_candies()
+                    if self.evolve_pokemon(delay):
+                        self.last_move_time = time.time()
+                        continue
+                    if self.config["minpokemon"] >= 0:
+                        if self.transfer_pokemon(delay):
+                            self.last_move_time = time.time()
+                            continue
                     self.prune_inventory(delay)
                     self.update_path()
                     self.move(self.config["speed"])

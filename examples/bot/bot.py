@@ -535,7 +535,7 @@ class PoGoBot(object):
             if ret["responses"]["ENCOUNTER"]["status"] == 1:
                 pokemon = ret["responses"]["ENCOUNTER"]["wild_pokemon"]
                 pcap =  ret["responses"]["ENCOUNTER"]['capture_probability']
-                sys.stdout.write("  Encountered a %d PQ %d CP wild %s...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"])))
+                sys.stdout.write("  Encountered a %d PQ %d CP wild %s at %f,%f...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]), pokemon["latitude"], pokemon["longitude"]))
                 clean.append(self.catch_pokemon(pokemon, "wild", self.balls, delay, pid, pcap))
             else:
                 print(ret)
@@ -570,7 +570,7 @@ class PoGoBot(object):
                         pokemon["latitude"] = fort["latitude"]
                         pokemon["longitude"] = fort["longitude"]
                         pcap =  ret["responses"]["DISK_ENCOUNTER"]['capture_probability']
-                        sys.stdout.write("  Encountered a %d PQ %d CP lured %s...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"])))
+                        sys.stdout.write("  Encountered a %d PQ %d CP lured %s at %f,%f...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]), pokemon["latitude"], pokemon["longitude"]))
                         clean.append(self.catch_pokemon(pokemon, "lure", self.balls, delay, pid, pcap))
                     else:
                         print(ret)

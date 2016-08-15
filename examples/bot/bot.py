@@ -9,6 +9,9 @@ import random
 import operator
 import numpy as np
 
+import re
+abconly = re.compile('[^a-zA-Z]')
+
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "../.."))
 from pgoapi import pgoapi
 import pgoapi.exceptions
@@ -215,14 +218,20 @@ class PoGoBot(object):
             sys.stdout.write("    Experience: %d\n" % sum(xp))
             sys.stdout.write("    Stardust: %d\n" % sum(stardust))
             sys.stdout.write("    Candy: %d\n" % sum(candy))
+        he = 0
+        if "eggs_hatched" in self.inventory["stats"]:
+            self.inventory["stats"]["eggs_hatched"]
+        psv = 0
+        if "poke_stop_visits" in self.inventory["stats"]:
+            self.inventory["stats"]["poke_stop_visits"]
         sys.stdout.write("Getting trainer information...\n")
         sys.stdout.write("  Trainer level: %d\n" % self.inventory["stats"]["level"])
         sys.stdout.write("  Experience: %d\n" % self.inventory["stats"]["experience"])
         sys.stdout.write("  Next level experience needed: %d\n" % (self.inventory["stats"]["next_level_xp"]-self.inventory["stats"]["experience"]))
         sys.stdout.write("  Kilometers walked: %.2f\n" % self.inventory["stats"]["km_walked"])
         sys.stdout.write("  Stardust: %d\n" % [cur["amount"] for cur in self.player["currencies"] if cur["name"] == "STARDUST"][0])
-        sys.stdout.write("  Hatched eggs: %d\n" % self.inventory["stats"]["eggs_hatched"])
-        sys.stdout.write("  Pokestops visited: %d\n" % self.inventory["stats"]["poke_stop_visits"])
+        sys.stdout.write("  Hatched eggs: %d\n" % he)
+        sys.stdout.write("  Pokestops visited: %d\n" % psv)
         sys.stdout.write("  Unique pokedex entries: %d\n" % (self.inventory["stats"]["unique_pokedex_entries"]))
         sys.stdout.write("  Pokemon storage: %d/%d\n" % (sum([len(v) for k,v in self.inventory["pokemon"].iteritems()]) + len(self.inventory["eggs"]), self.player["max_pokemon_storage"]))
         sys.stdout.write("  Egg storage: %d/%d\n" % (len(self.inventory["eggs"]), 9))
@@ -269,7 +278,7 @@ class PoGoBot(object):
     def get_rewards(self, delay):
         sys.stdout.write("Getting level-up rewards...\n")
         ret = self.api.level_up_rewards(level=self.inventory["stats"]["level"])
-        if ret["responses"]["LEVEL_UP_REWARDS"]["result"] == 1:
+        if ret["responses"]["LEVEL_UP_REWARDS"]["result"] == 1 and "items_awarded" in ret["responses"]["LEVEL_UP_REWARDS"]:
             sys.stdout.write("  Items:\n")
             ni = {}
             for item in ret["responses"]["LEVEL_UP_REWARDS"]["items_awarded"]:
@@ -708,7 +717,7 @@ class PoGoBot(object):
             pid = catch["pokemon_data"]["pokemon_id"]
             lat = catch["latitude"]
             lng = catch["longitude"]
-            map.add_point((lat, lng), "https://img.pokemondb.net/sprites/black-white/normal/%s.png" % self.pokemon_id_to_name(pid).lower().replace("'",""))
+            map.add_point((lat, lng), "https://img.pokemondb.net/sprites/black-white/normal/%s.png" % abconly.sub("", self.pokemon_id_to_name(pid).lower()))
         if "snipe" in self.config and self.config["snipe"] != None:
             map.add_point((self.config["snipe"][0], self.config["snipe"][1]), "http://maps.google.com/mapfiles/ms/icons/red.png")
         for spin in self.spins:

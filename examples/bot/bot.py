@@ -717,30 +717,30 @@ class PoGoBot(object):
             pid = catch["pokemon_data"]["pokemon_id"]
             lat = catch["latitude"]
             lng = catch["longitude"]
-            map.add_point((lat, lng), "https://img.pokemondb.net/sprites/black-white/normal/%s.png" % abconly.sub("", self.pokemon_id_to_name(pid).lower()))
+            map.add_point2((lat, lng), "%03d" % pid)
         if "snipe" in self.config and self.config["snipe"] != None:
-            map.add_point((self.config["snipe"][0], self.config["snipe"][1]), "http://maps.google.com/mapfiles/ms/icons/red.png")
+            map.add_point1((self.config["snipe"][0], self.config["snipe"][1]), "http://maps.google.com/mapfiles/ms/icons/red.png")
         for spin in self.spins:
-            map.add_point((spin['latitude'], spin['longitude']), "http://maps.google.com/mapfiles/ms/icons/blue.png")
+            map.add_point1((spin['latitude'], spin['longitude']), "http://maps.google.com/mapfiles/ms/icons/blue.png")
         for sp in self.pois["spawn_points"]:
-            map.add_point(sp, "http://www.andrew.cmu.edu/user/rhope/darkgray-dot-4x4.png")
+            map.add_point1(sp, "http://www.andrew.cmu.edu/user/rhope/darkgray-dot-4x4.png")
         for _, pokestop in self.pois["pokestops"].iteritems():
             if pokestop["id"] in self.visited:
-                map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
+                map.add_point1((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
             else:
                 if 'active_fort_modifier' in pokestop:
-                    map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
+                    map.add_point1((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
                 else:
-                    map.add_point((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/green-circle.png")
+                    map.add_point1((pokestop['latitude'], pokestop['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/green-circle.png")
         for _, gym in self.pois["gyms"].iteritems():
-            map.add_point((gym['latitude'], gym['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/blue-circle.png")
+            map.add_point1((gym['latitude'], gym['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/blue-circle.png")
         # for _, pokemon in self.pois["pokemon"].iteritems():
         #     map.add_point((pokemon['latitude'], pokemon['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/red-circle.png")
         # for _, sp in self.spawnpoints.iteritems():
         #     map.add_point((sp['latitude'], sp['longitude']), "http://www.srh.noaa.gov/images/tsa/timeline/gray-circle.png")
         if self.target:
             target = self.pois["pokestops"][self.target]
-            map.add_point((target['latitude'], target['longitude']), "http://maps.google.com/mapfiles/ms/icons/green.png")
+            map.add_point1((target['latitude'], target['longitude']), "http://maps.google.com/mapfiles/ms/icons/green.png")
 
         with open("maptrace.html", "w") as out:
             print(map, file=out)

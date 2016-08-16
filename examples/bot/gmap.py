@@ -75,7 +75,7 @@ class Map(object):
                         url: sprites[i],
                         size: new google.maps.Size(120,120),
                         origin: new google.maps.Point(0,0),
-                        anchor: new google.maps.Point(0,0),
+                        anchor: new google.maps.Point(24,24),
                         scaledSize: new google.maps.Size(48,48)
                     }};
                 }}

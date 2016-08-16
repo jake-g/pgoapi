@@ -76,7 +76,7 @@ class Map(object):
                         size: new google.maps.Size(120,120),
                         origin: new google.maps.Point(0,0),
                         anchor: new google.maps.Point(0,0),
-                        scaledSize: new google.maps.Size(64,64)
+                        scaledSize: new google.maps.Size(48,48)
                     }};
                 }}
                 function show_map() {{

@@ -21,6 +21,11 @@ from s2sphere import LatLng, Angle, Cap, RegionCoverer, math
 from gmap import Map
 from tsp import mk_matrix, nearest_neighbor, length, localsearch, multistart_localsearch
 
+try:
+    xrange
+except NameError:
+    xrange = range
+
 def get_angle(p1, p2):
     y1, x1 = p1
     y2, x2 = p2

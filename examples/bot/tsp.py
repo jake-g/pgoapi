@@ -75,7 +75,7 @@ def nearest_neighbor(n, i, D):
     - while there are unvisited cities, follow to the closest one
     - return to city i
     """
-    unvisited = range(n)
+    unvisited = list(range(n))
     unvisited.remove(i)
     last = i
     tour = [i]

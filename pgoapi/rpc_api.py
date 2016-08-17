@@ -221,10 +221,28 @@ class RpcApi:
                 if "device_model" in self._signature_info["DeviceInfo"]:
                     sig.DeviceInfo.device_model = self._signature_info["DeviceInfo"]["device_model"]
 
+            sig.SensorInfo.timestamp_snapshot = get_time(ms=True) - RpcApi.START_TIME
+            sig.SensorInfo.magnetometer_x = random.gauss(4.1,.1)
+            sig.SensorInfo.magnetometer_y = random.gauss(-.5,.05)
+            sig.SensorInfo.magnetometer_z = random.gauss(-37,.05)
+            sig.SensorInfo.angle_normalized_x = random.gauss(0,.01)
+            sig.SensorInfo.angle_normalized_y = random.gauss(0,.01)
+            sig.SensorInfo.angle_normalized_z = random.gauss(0,.01)
+            sig.SensorInfo.accel_raw_x = random.gauss(0.01,.01)
+            sig.SensorInfo.accel_raw_y = random.gauss(0.4,.05)
+            sig.SensorInfo.accel_raw_z = random.gauss(9.5,.1)
+            sig.SensorInfo.gyroscope_raw_x = random.gauss(.012,.001)
+            sig.SensorInfo.gyroscope_raw_y = random.gauss(.012,.001)
+            sig.SensorInfo.gyroscope_raw_z = random.gauss(.012,.001)
+            sig.SensorInfo.accel_normalized_x = random.gauss(0.001,.001)
+            sig.SensorInfo.accel_normalized_y = random.gauss(0.01,.01)
+            sig.SensorInfo.accel_normalized_z = random.gauss(0.2,.05)
+            sig.SensorInfo.accelerometer_axes = 3
+
             signature_proto = sig.SerializeToString()
 
             #u6 = request.unknown6.add()
-            
+
             u6 = request.unknown6
             u6.request_type = 6
             u6.unknown2.encrypted_signature = self._generate_signature(signature_proto)

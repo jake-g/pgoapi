@@ -70,7 +70,11 @@ def init_config():
         if "snipe" in config and config["snipe"]!=None:
             config["location"] = config["snipe"]
     elif "snipe" in args.__dict__ and args.__dict__["snipe"] != None:
-        config["location"] = config["snip"] = json.loads(args.__dict__["snipe"])
+        try:
+            config["location"] = config["snip"] = json.loads(args.__dict__["snipe"])
+        except json.decoder.JSONDecodeError:
+            loc = list(map(float,args.__dict__["snipe"].split(","))) + [0]
+            config["location"] = config["snip"] = loc[:3]
 
     # Passed in arguments shoud trump
     for key in args.__dict__:

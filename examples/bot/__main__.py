@@ -44,6 +44,7 @@ def init_config():
     parser.add_argument("-r", "--radius", type=int, help="S2 Cell search radius", required=required("radius"))
     parser.add_argument("-n", "--noise", help="TPS poission noise")
     parser.add_argument("-d", "--debug", help="Debug Mode", action='store_true')
+    parser.add_argument("--snipe", type=str, help="Snipe coords")
     parser.add_argument("--minpq", type=int, help="Minimum power quotient for keeping pokemon", required=required("minpq"))
     parser.add_argument("--mincp", type=int, help="Minimum combat power for keeping pokemon", required=required("mincp"))
     parser.add_argument("--best_balls_first", action='store_true', help="Prioritize throwing better balls")
@@ -68,6 +69,8 @@ def init_config():
             config.update(clean_coords)
         if "snipe" in config and config["snipe"]!=None:
             config["location"] = config["snipe"]
+    elif "snipe" in args.__dict__ and args.__dict__["snipe"] != None:
+        config["location"] = config["snip"] = json.loads(args.__dict__["snipe"])
 
     # Passed in arguments shoud trump
     for key in args.__dict__:

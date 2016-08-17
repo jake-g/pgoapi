@@ -132,7 +132,7 @@ class PoGoBot(object):
         self.player = player["player_data"]
 
     def prune_inventory(self, delay):
-        sys.stdout.write("Pruning inventory...\n")
+        print("Pruning inventory...")
         first = True
         if sum(self.inventory["items"].values()) < self.player["max_item_storage"]:
             status = "Below"
@@ -146,10 +146,10 @@ class PoGoBot(object):
                 ret = self.api.recycle_inventory_item(item_id=int(il), count=count)
                 if ret["responses"]['RECYCLE_INVENTORY_ITEM']["result"] == 1:
                     if first:
-                        sys.stdout.write("  %s max inventory...\n" % status)
-                        sys.stdout.write("    Recycled:\n")
+                        print("  %s max inventory..." % status)
+                        print("    Recycled:")
                         first = False
-                    sys.stdout.write("      %d x %s\n" % (count, self.item_names[il]))
+                    print("      %d x %s" % (count, self.item_names[il]))
                 else:
                     print(ret)
                 time.sleep(delay)
@@ -214,65 +214,65 @@ class PoGoBot(object):
             self.process_inventory(ret["responses"]["GET_INVENTORY"])
         if hatched:
             pokemon, stardust, candy, xp = hatched
-            sys.stdout.write("  Hatched %d eggs:...\n" % len(pokemon))
-            sys.stdout.write("    Pokemon:\n")
+            print("  Hatched %d eggs:..." % len(pokemon))
+            print("    Pokemon:")
             for p in pokemon:
                 found = False
                 for _,fam in self.inventory["pokemon"].items():
                     for pp in fam:
                         if pp["pokemon_data"]["id"] == p:
-                            sys.stdout.write("      %s\n" % p)
+                            print("      %s" % p)
                             found = True
                             break
                     if found:
                         break
-            sys.stdout.write("    Experience: %d\n" % sum(xp))
-            sys.stdout.write("    Stardust: %d\n" % sum(stardust))
-            sys.stdout.write("    Candy: %d\n" % sum(candy))
+            print("    Experience: %d" % sum(xp))
+            print("    Stardust: %d" % sum(stardust))
+            print("    Candy: %d" % sum(candy))
         he = 0
         if "eggs_hatched" in self.inventory["stats"]:
             self.inventory["stats"]["eggs_hatched"]
         psv = 0
         if "poke_stop_visits" in self.inventory["stats"]:
             self.inventory["stats"]["poke_stop_visits"]
-        sys.stdout.write("Getting trainer information...\n")
-        sys.stdout.write("  Trainer level: %d\n" % self.inventory["stats"]["level"])
-        sys.stdout.write("  Experience: %d\n" % self.inventory["stats"]["experience"])
-        sys.stdout.write("  Next level experience needed: %d\n" % (self.inventory["stats"]["next_level_xp"]-self.inventory["stats"]["experience"]))
-        sys.stdout.write("  Kilometers walked: %.2f\n" % self.inventory["stats"]["km_walked"])
-        sys.stdout.write("  Stardust: %d\n" % [cur["amount"] for cur in self.player["currencies"] if cur["name"] == "STARDUST"][0])
-        sys.stdout.write("  Hatched eggs: %d\n" % he)
-        sys.stdout.write("  Pokestops visited: %d\n" % psv)
-        sys.stdout.write("  Unique pokedex entries: %d\n" % (self.inventory["stats"]["unique_pokedex_entries"]))
-        sys.stdout.write("  Pokemon storage: %d/%d\n" % (sum([len(v) for k,v in self.inventory["pokemon"].items()]) + len(self.inventory["eggs"]), self.player["max_pokemon_storage"]))
-        sys.stdout.write("  Egg storage: %d/%d\n" % (len(self.inventory["eggs"]), 9))
+        print("Getting trainer information...")
+        print("  Trainer level: %d" % self.inventory["stats"]["level"])
+        print("  Experience: %d" % self.inventory["stats"]["experience"])
+        print("  Next level experience needed: %d" % (self.inventory["stats"]["next_level_xp"]-self.inventory["stats"]["experience"]))
+        print("  Kilometers walked: %.2f" % self.inventory["stats"]["km_walked"])
+        print("  Stardust: %d" % [cur["amount"] for cur in self.player["currencies"] if cur["name"] == "STARDUST"][0])
+        print("  Hatched eggs: %d" % he)
+        print("  Pokestops visited: %d" % psv)
+        print("  Unique pokedex entries: %d" % (self.inventory["stats"]["unique_pokedex_entries"]))
+        print("  Pokemon storage: %d/%d" % (sum([len(v) for k,v in self.inventory["pokemon"].items()]) + len(self.inventory["eggs"]), self.player["max_pokemon_storage"]))
+        print("  Egg storage: %d/%d" % (len(self.inventory["eggs"]), 9))
         first = True
         for _,ib in self.inventory["incubators"].items():
             if 'pokemon_id' in ib:
                 if first:
-                    sys.stdout.write("  Loaded incubators:\n")
+                    print("  Loaded incubators:")
                     first = False
-                sys.stdout.write("    Remaining km: %.2f\n" % (ib["target_km_walked"]-self.inventory["stats"]["km_walked"]))
-        sys.stdout.write("  Item storage: %d/%d\n" % (sum(self.inventory["items"].values()), self.player["max_item_storage"]))
+                print("    Remaining km: %.2f" % (ib["target_km_walked"]-self.inventory["stats"]["km_walked"]))
+        print("  Item storage: %d/%d" % (sum(self.inventory["items"].values()), self.player["max_item_storage"]))
         first = True
         for i in self.inventory["items"]:
             if first:
-                sys.stdout.write("  Inventory:\n")
+                print("  Inventory:")
                 first = False
-            sys.stdout.write("    %d x %s\n" % (self.inventory["items"][i], self.item_names[str(i)]))
+            print("    %d x %s" % (self.inventory["items"][i], self.item_names[str(i)]))
         first = True
         for i in self.inventory["applied"]:
             if first:
-                sys.stdout.write("  Applied items:\n")
+                print("  Applied items:")
                 first = False
-            sys.stdout.write("    %s has %.2f minutes left\n" % (self.item_names[str(i["item_id"])], ((i["expire_ms"]/1000)-time.time())/60))
+            print("    %s has %.2f minutes left" % (self.item_names[str(i["item_id"])], ((i["expire_ms"]/1000)-time.time())/60))
 
     def get_hatched_eggs(self, delay):
         pokemon = []
         stardust = 0
         candy = 0
         xp = 0
-        sys.stdout.write("Getting hatched eggs...\n")
+        print("Getting hatched eggs...")
         ret = self.api.get_hatched_eggs()
         if 'pokemon_id' in ret["responses"]["GET_HATCHED_EGGS"]:
             hatched = (
@@ -287,10 +287,10 @@ class PoGoBot(object):
         return hatched
 
     def get_rewards(self, delay):
-        sys.stdout.write("Getting level-up rewards...\n")
+        print("Getting level-up rewards...")
         ret = self.api.level_up_rewards(level=self.inventory["stats"]["level"])
         if ret["responses"]["LEVEL_UP_REWARDS"]["result"] == 1 and "items_awarded" in ret["responses"]["LEVEL_UP_REWARDS"]:
-            sys.stdout.write("  Items:\n")
+            print("  Items:")
             ni = {}
             for item in ret["responses"]["LEVEL_UP_REWARDS"]["items_awarded"]:
                 if not item["item_id"] in ni:
@@ -298,7 +298,7 @@ class PoGoBot(object):
                 else:
                     ni[item["item_id"]] += 1
             for item in ni:
-                sys.stdout.write("    %d x %s\n" % (ni[item], self.item_names[str(item)]))
+                print("    %d x %s" % (ni[item], self.item_names[str(item)]))
         time.sleep(delay)
 
     EARTH_RADIUS = 6371 * 1000
@@ -311,13 +311,13 @@ class PoGoBot(object):
         coverer = RegionCoverer()
         coverer.min_level = level
         coverer.max_level = level
-        sys.stdout.write("  Requesting level %d to %d S2 cells...\n" % (coverer.min_level, coverer.max_level))
+        print("  Requesting level %d to %d S2 cells..." % (coverer.min_level, coverer.max_level))
         cells = coverer.get_covering(region)
         cells = cells[:100]  # len(cells) = 100 is max allowed by the server
         return sorted([x.id() for x in cells])
 
     def get_pois(self, delay):
-        sys.stdout.write("Getting POIs...\n")
+        print("Getting POIs...")
         lat, lng, alt = self.api.get_position()
         level = 15
         if not level in self.scan_stats:
@@ -328,7 +328,7 @@ class PoGoBot(object):
                 self.cell_timestamps[cid] = 0
         timestamps = [self.cell_timestamps[cid] for cid in cell_ids]
         # for i in xrange(len(timestamps)):
-        #     sys.stdout.write("    Cell %s, last timestamp: %d\n" % (cell_ids[i], timestamps[i]))
+        #     print("    Cell %s, last timestamp: %d" % (cell_ids[i], timestamps[i]))
         ret = self.api.get_map_objects(latitude=lat, longitude=lng, since_timestamp_ms=timestamps, cell_id=cell_ids)
         newpokemon = 0
         newpokestops = 0
@@ -369,23 +369,23 @@ class PoGoBot(object):
                 if 'catchable_pokemons' in map_cell:
                     pass#print('catchable_pokemons', map_cell['catchable_pokemons'])
         if newpokemon > 0:
-            sys.stdout.write("    Found %d new pokemon.\n" % newpokemon)
+            print("    Found %d new pokemon." % newpokemon)
             self.scan_stats[level]["wild_pokemon"] += newpokemon
         if newpokestops > 0:
-            sys.stdout.write("    Found %d new pokestops.\n" % newpokestops)
+            print("    Found %d new pokestops." % newpokestops)
         if newgyms > 0:
-            sys.stdout.write("    Found %d new gyms.\n" % newgyms)
+            print("    Found %d new gyms." % newgyms)
         if newspawnpoints > 0:
-            sys.stdout.write("    Found %d new spawnpoints.\n" % newgyms)
+            print("    Found %d new spawnpoints." % newgyms)
             self.scan_stats[level]["spawn_points"] += newspawnpoints
         if len(self.scan_stats.keys()) > 0:
-            sys.stdout.write("  Scan stats by level:\n")
+            print("  Scan stats by level:")
             for level, stat in self.scan_stats.items():
-                sys.stdout.write('    %s {"wild_pokemon": %d, "spawn_points": %d}\n' % (level, stat["wild_pokemon"], stat["spawn_points"]))
+                print('    %s {"wild_pokemon": %d, "spawn_points": %d}' % (level, stat["wild_pokemon"], stat["spawn_points"]))
         time.sleep(delay)
 
     def prune_expired_pokemon(self):
-        sys.stdout.write("Pruning expired pokemon...\n")
+        print("Pruning expired pokemon...")
         expired = []
         for k, pokemon in self.pois["pokemon"].items():
             if pokemon['time_till_hidden_ms'] <= time.time():
@@ -393,7 +393,7 @@ class PoGoBot(object):
         if len(expired) > 0:
             for k in expired:
                 del self.pois["pokemon"][k]
-            sys.stdout.write("  %d pokemon expired.\n" % len(expired))
+            print("  %d pokemon expired." % len(expired))
 
     def spin_pokestop(self, pokestop, lat, lng, alt, delay, clear=False):
         status = 0
@@ -404,12 +404,12 @@ class PoGoBot(object):
             if pokestop["id"] == self.target:
                 self.target = None
             if clear:
-                sys.stdout.write("\n")
-            sys.stdout.write("  Spun pokestop and got:\n")
+                print("")
+            print("  Spun pokestop and got:")
             xp = ret["responses"]["FORT_SEARCH"]["experience_awarded"]
-            sys.stdout.write("    Experience: %d\n" % xp)
+            print("    Experience: %d" % xp)
             if "items_awarded" in ret["responses"]["FORT_SEARCH"]:
-                sys.stdout.write("    Items:\n")
+                print("    Items:")
                 ni = {}
                 for item in ret["responses"]["FORT_SEARCH"]["items_awarded"]:
                     if not item["item_id"] in ni:
@@ -417,7 +417,7 @@ class PoGoBot(object):
                     else:
                         ni[item["item_id"]] += 1
                 for item in ni:
-                    sys.stdout.write("      %d x %s\n" % (ni[item], self.item_names[str(item)]))
+                    print("      %d x %s" % (ni[item], self.item_names[str(item)]))
             status = 1
         else:
             if ret["responses"]["FORT_SEARCH"]["result"] == 3:
@@ -427,7 +427,7 @@ class PoGoBot(object):
         return (status, ret["responses"]["FORT_SEARCH"]["result"])
 
     def unsoftban(self, delay):
-        sys.stdout.write("Testing softban...\n")
+        print("Testing softban...")
         lat, lng, alt = self.api.get_position()
         nearest = (None, float("inf"))
         for pid, pokestop in self.pois["pokestops"].items():
@@ -436,21 +436,22 @@ class PoGoBot(object):
                 nearest = (pokestop, d)
         if nearest[0] != None:
             self.api.set_position(nearest[0]['latitude'], nearest[0]['longitude'], alt)
-            sys.stdout.write("  Attempting 40 spin fix.\n")
-            sys.stdout.write("    Spin ")
+            print("  Attempting 40 spin fix.")
+            print("    Spin ",end="")
             spins = 40
             for i in xrange(spins):
-                sys.stdout.write("%d" % (i+1))
+                print("%d" % (i+1),end="")
+                sys.stdout.flush()
                 s,r = self.spin_pokestop(nearest[0], lat, lng, alt, delay, True)
                 time.sleep(delay)
                 if s != -1:
                     self.softbanned = False
                     break
                 if i < spins-1:
-                    sys.stdout.write(",")
+                    print(",",end="")
 
     def spin_pokestops(self, delay):
-        sys.stdout.write("Spinning pokestops...\n")
+        print("Spinning pokestops...")
         lat, lng, alt = self.api.get_position()
         for pid, pokestop in self.pois["pokestops"].items():
             if get_distance((pokestop['latitude'], pokestop['longitude']), (lat, lng)) < 0.0004435:
@@ -458,18 +459,18 @@ class PoGoBot(object):
                     s,r = self.spin_pokestop(pokestop, lat, lng, alt, delay)
                     time.sleep(delay)
                     if s == -1:
-                        sys.stdout.write("  Softban detected, attempting 40 spin fix.\n")
-                        sys.stdout.write("    Spin ")
+                        print("  Softban detected, attempting 40 spin fix.")
+                        print("    Spin ")
                         spins = 40
                         for i in xrange(spins):
-                            sys.stdout.write("%d" % (i+1))
+                            print("%d" % (i+1))
                             s,r = self.spin_pokestop(pokestop, lat, lng, alt, delay)
                             time.sleep(delay)
                             if s == 1:
                                 break
                             if i < spins-1:
-                                sys.stdout.write(",")
-                        sys.stdout.write("\n")
+                                print(",")
+                        print("")
 
     def clean_encounter(self, kind, upid):
         if kind == "incense" and upid in self.incense_encounters.keys():
@@ -484,17 +485,17 @@ class PoGoBot(object):
         pid = pokemon["pokemon_data"]["pokemon_id"]
         if pcap and "capture_probability" in pcap:
             pcap = pcap["capture_probability"][0]
-            sys.stdout.write("    Pokeball capture probability is %.2f...\n" % pcap)
+            print("    Pokeball capture probability is %.2f..." % pcap)
             if pcap < .25 and "701" in self.inventory["items"]:
-                sys.stdout.write("      Using a %s..." % self.item_names["701"])
+                print("      Using a %s..." % self.item_names["701"], end="")
                 ret = self.api.use_item_capture(item_id=701, encounter_id=eid, spawn_point_id=spid)
                 if "item_capture_mult" in ret["responses"]["USE_ITEM_CAPTURE"]:
-                    sys.stdout.write("success.\n")
-                    sys.stdout.write("        Capture multiplier %.2f...\n" % ret["responses"]["USE_ITEM_CAPTURE"]["item_capture_mult"])
+                    print("success.")
+                    print("        Capture multiplier %.2f..." % ret["responses"]["USE_ITEM_CAPTURE"]["item_capture_mult"])
                     pcap = pcap * ret["responses"]["USE_ITEM_CAPTURE"]["item_capture_mult"]
-                    sys.stdout.write("        New capture probability is %.2f...\n" % pcap)
+                    print("        New capture probability is %.2f..." % pcap)
                 else:
-                    sys.stdout.write("failed.\n")
+                    print("failed.")
                     print(ret)
                 time.sleep(delay)
             if pcap < .3:
@@ -512,38 +513,38 @@ class PoGoBot(object):
                 ball = balls.pop(balls.index(minball))
             else:
                 ball = balls.pop()
-            sys.stdout.write("    Throwing a %s..." % self.item_names[str(ball)])
+            print("    Throwing a %s..." % self.item_names[str(ball)], end="")
             ret = self.api.catch_pokemon(encounter_id=eid, spawn_point_id=spid, pokeball=ball, normalized_reticle_size = normalized_reticle_size, hit_pokemon=True, spin_modifier=spin_modifier, normalized_hit_position=normalized_hit_position)
             if ret["responses"]["CATCH_POKEMON"]["status"] == 1:
-                sys.stdout.write("success.\n")
+                print("success.")
                 clean = (kind, upid)
                 self.catches.append((kind,pokemon))
-                sys.stdout.write("      Experience: %d\n" % sum(ret["responses"]["CATCH_POKEMON"]["capture_award"]["xp"]))
-                sys.stdout.write("      Stardust: %d\n" % sum(ret["responses"]["CATCH_POKEMON"]["capture_award"]["stardust"]))
-                sys.stdout.write("      Candies: %d\n" % sum(ret["responses"]["CATCH_POKEMON"]["capture_award"]["candy"]))
+                print("      Experience: %d" % sum(ret["responses"]["CATCH_POKEMON"]["capture_award"]["xp"]))
+                print("      Stardust: %d" % sum(ret["responses"]["CATCH_POKEMON"]["capture_award"]["stardust"]))
+                print("      Candies: %d" % sum(ret["responses"]["CATCH_POKEMON"]["capture_award"]["candy"]))
                 break
             elif ret["responses"]["CATCH_POKEMON"]["status"] == 0:
-                sys.stdout.write("error.\n")
+                print("error.")
                 break
             elif ret["responses"]["CATCH_POKEMON"]["status"] == 2:
-                sys.stdout.write("escape.\n")
+                print("escape.")
                 if not self.config["best_balls_first"]:
                     minball += 1
                 if minball > 3:
                     minball = 3
                 time.sleep(delay)
             elif ret["responses"]["CATCH_POKEMON"]["status"] == 3:
-                sys.stdout.write("flee.\n")
+                print("flee.")
                 clean = (kind, upid)
                 break
             elif ret["responses"]["CATCH_POKEMON"]["status"] == 4:
-                sys.stdout.write("missed.\n")
+                print("missed.")
                 time.sleep(delay)
         time.sleep(delay)
         return clean
 
     def catch_wild_pokemon(self, delay):
-        sys.stdout.write("Looking for wild pokemon encounters...\n")
+        print("Looking for wild pokemon encounters...")
         lat, lng, alt = self.api.get_position()
         clean = []
         for pid, pokemon in self.pois["pokemon"].items():
@@ -555,7 +556,7 @@ class PoGoBot(object):
             if ret["responses"]["ENCOUNTER"]["status"] == 1:
                 pokemon = ret["responses"]["ENCOUNTER"]["wild_pokemon"]
                 pcap =  ret["responses"]["ENCOUNTER"]['capture_probability']
-                sys.stdout.write("  Encountered a %d PQ %d CP wild %s at %f,%f...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]), pokemon["latitude"], pokemon["longitude"]))
+                print("  Encountered a %d PQ %d CP wild %s at %f,%f..." % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]), pokemon["latitude"], pokemon["longitude"]))
                 clean.append(self.catch_pokemon(pokemon, "wild", self.balls, delay, pid, pcap))
             else:
                 print(ret)
@@ -564,7 +565,7 @@ class PoGoBot(object):
 
 
     def catch_lure_pokemon(self, delay):
-        sys.stdout.write("Lookng for lure pokemon encounters...\n")
+        print("Lookng for lure pokemon encounters...")
         clean = []
         for fid, fort in self.pois["pokestops"].items():
             if "lure_info" in fort:
@@ -590,7 +591,7 @@ class PoGoBot(object):
                         pokemon["latitude"] = fort["latitude"]
                         pokemon["longitude"] = fort["longitude"]
                         pcap =  ret["responses"]["DISK_ENCOUNTER"]['capture_probability']
-                        sys.stdout.write("  Encountered a %d PQ %d CP lured %s at %f,%f...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]), pokemon["latitude"], pokemon["longitude"]))
+                        print("  Encountered a %d PQ %d CP lured %s at %f,%f..." % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"]), pokemon["latitude"], pokemon["longitude"]))
                         clean.append(self.catch_pokemon(pokemon, "lure", self.balls, delay, pid, pcap))
                     else:
                         print(ret)
@@ -598,7 +599,7 @@ class PoGoBot(object):
             if c: self.clean_encounter(*c)
 
     def catch_incense_pokemon(self, delay):
-        sys.stdout.write("Lookng for incense encounters...\n")
+        print("Lookng for incense encounters...")
         lat, lng, alt = self.api.get_position()
         ret = self.api.get_incense_pokemon(player_latitude=lat,
                                            player_longitude=lng)
@@ -615,7 +616,7 @@ class PoGoBot(object):
             time.sleep(delay)
             if ret["responses"]["INCENSE_ENCOUNTER"]["result"] == 1:
                 pcap =  ret["responses"]["INCENSE_ENCOUNTER"]['capture_probability']
-                sys.stdout.write("  Encountered an %d PQ %d CP incense %s...\n" % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_id"])))
+                print("  Encountered an %d PQ %d CP incense %s..." % (self.calc_pq(pokemon), pokemon['pokemon_data']["cp"], self.pokemon_id_to_name(pokemon["pokemon_id"])))
                 clean.append(self.catch_pokemon(pokemon, "incense", self.balls, delay, pid, pcap))
             else:
                 print(ret)
@@ -623,10 +624,10 @@ class PoGoBot(object):
             if c: self.clean_encounter(*c)
 
     def update_path(self):
-        sys.stdout.write("Updating path...\n")
+        print("Updating path...")
         lat, lng, alt = self.api.get_position()
         if self.target == None:
-            sys.stdout.write("  Picking new target...\n")
+            print("  Picking new target...")
             coord = [(lat, lng)]
             fids = []
             for fid, pokestop in self.pois["pokestops"].items():
@@ -644,7 +645,7 @@ class PoGoBot(object):
                     if 'active_fort_modifier' in self.pois["pokestops"][fids[tour[i]]] and not fids[tour[i]] in self.visited:
                         lures.append(i)
                 if len(lures) > 0 and min(lures) > 0:
-                    sys.stdout.write("    Prioritizing pokestop with lure...\n")
+                    print("    Prioritizing pokestop with lure...")
                     i = min(lures)
                 else:
                     while True:
@@ -660,13 +661,13 @@ class PoGoBot(object):
             del self.visited[k]
 
     def move(self, mph=5):
-        sys.stdout.write("Moving...\n")
+        print("Moving...")
         now = time.time()
         delta = now - self.last_move_time
         lat, lng, alt = self.api.get_position()
         r = 1.0/69.0/60.0/60.0*mph*delta
         if len(self.balls) > 0 and len(self.incense_encounters.keys()) > 0:
-            sys.stdout.write("  Heading towards nearby incense pokemon...\n")
+            print("  Heading towards nearby incense pokemon...")
             nearest = (None, float("inf"))
             for pid, pokemon in self.incense_encounters.items():
                 d = get_distance((pokemon['latitude'], pokemon['longitude']), (lat, lng))
@@ -680,7 +681,7 @@ class PoGoBot(object):
                 lat = lat + pymath.sin(pymath.radians(self.angle)) * r
                 lng = lng + pymath.cos(pymath.radians(self.angle)) * r
         elif len(self.balls) > 0 and len(self.pois["pokemon"]) > 0:
-            sys.stdout.write("  Heading towards nearby wild pokemon...\n")
+            print("  Heading towards nearby wild pokemon...")
             nearest = (None, float("inf"))
             for pid, pokemon in self.pois["pokemon"].items():
                 d = get_distance((pokemon['latitude'], pokemon['longitude']), (lat, lng))
@@ -694,7 +695,7 @@ class PoGoBot(object):
                 lat = lat + pymath.sin(pymath.radians(self.angle)) * r
                 lng = lng + pymath.cos(pymath.radians(self.angle)) * r
         else:
-            sys.stdout.write("  Heading to a pokestop...\n")
+            print("  Heading to a pokestop...")
             target = None
             if self.target:
                 target = self.pois["pokestops"][self.target]
@@ -704,7 +705,7 @@ class PoGoBot(object):
             if target and get_distance((lng, lat), (target["longitude"], target["latitude"])) < r:
                 lat = target["latitude"]
                 lng = target["longitude"]
-                sys.stdout.write("    Visited a pokestop...\n")
+                print("    Visited a pokestop...")
                 self.visited[self.target] = time.time()
                 self.target = None
             else:
@@ -715,7 +716,7 @@ class PoGoBot(object):
         self.last_move_time = now
 
     def save_map(self):
-        sys.stdout.write("Saving map...\n")
+        print("Saving map...")
         lat, lng, alt = self.api.get_position()
         map = Map()
         map._player = [lat, lng]
@@ -757,7 +758,7 @@ class PoGoBot(object):
             print(map, file=out)
 
     def save_config(self):
-        sys.stdout.write("Saving config...\n")
+        print("Saving config...")
         self.config["location"] = self.api.get_position()
         dump = {}
         dump.update(self.config)
@@ -767,7 +768,7 @@ class PoGoBot(object):
             json.dump(dump, out, indent=2, sort_keys=True)
 
     def load_incubators(self):
-        sys.stdout.write("Loading incubators...\n")
+        print("Loading incubators...")
         for _,ib in self.inventory["incubators"].items():
             if not 'pokemon_id' in ib:
                 if len(self.inventory["eggs"]) > 0:
@@ -783,7 +784,7 @@ class PoGoBot(object):
                                 bestegg = (egg, egg["egg_km_walked_target"])
                     ret = self.api.use_item_egg_incubator(item_id=ib['id'], pokemon_id=bestegg[0]['id'])
                     if ret["responses"]['USE_ITEM_EGG_INCUBATOR']["result"] == 1:
-                        sys.stdout.write("  A %fkm egg was loaded.\n" % bestegg[1])
+                        print("  A %fkm egg was loaded." % bestegg[1])
                         del self.inventory["eggs"][eid]
                     else:
                         print(ret)
@@ -802,7 +803,7 @@ class PoGoBot(object):
             yield (x + r * pymath.cos(ang), y + r * pymath.sin(ang))
 
     def process_candies(self):
-        sys.stdout.write("Processing candies...\n")
+        print("Processing candies...")
         self.enabled_evolutions = {}
         if len(self.inventory["candies"].keys()) > 0:
             candies = {}
@@ -815,7 +816,7 @@ class PoGoBot(object):
                         self.enabled_evolutions[pid] = evos
                         candies[fid] -= evos
             if len(self.enabled_evolutions.keys()) > 0:
-                sys.stdout.write("  Candy cost met for evolutions:\n")
+                print("  Candy cost met for evolutions:")
                 for pid, req in sorted(self.evoreq.items(), key=operator.itemgetter(1), reverse=True):
                     if pid in self.enabled_evolutions.keys():
                         evos = self.enabled_evolutions[pid]
@@ -827,12 +828,12 @@ class PoGoBot(object):
                                 extra = " (%d more pokemon needed)" % (evos-isize)
                         else:
                             extra = " (%d more pokemon needed)" % evos
-                        sys.stdout.write("    %d x %s%s\n" % (evos, self.pokemon_id_to_name(int(pid)), extra))
+                        print("    %d x %s%s" % (evos, self.pokemon_id_to_name(int(pid)), extra))
 
     def transfer_pokemon(self, delay):
         t = 0
         if (sum([len(v) for k,v in self.inventory["pokemon"].items()]) + len(self.inventory["eggs"])) > self.config["minpokemon"]:
-            sys.stdout.write("Transfering pokemon...\n")
+            print("Transfering pokemon...")
             transferable_pokemon = []
             for pid in self.inventory["pokemon"]:
                 if "whitelist" in self.config and str(pid) in map(str,self.config["whitelist"]):
@@ -862,7 +863,7 @@ class PoGoBot(object):
             for pokemon, pq in transferable_pokemon:
                 ret = self.api.release_pokemon(pokemon_id=pokemon["pokemon_data"]["id"])
                 if ret and "RELEASE_POKEMON" in ret['responses'] and ret["responses"]["RELEASE_POKEMON"]["result"] == 1:
-                    sys.stdout.write("  A %d PQ %d CP %s was released.\n" % (pq, pokemon["pokemon_data"]["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"])))
+                    print("  A %d PQ %d CP %s was released." % (pq, pokemon["pokemon_data"]["cp"], self.pokemon_id_to_name(pokemon["pokemon_data"]["pokemon_id"])))
                     t += 1
                 time.sleep(delay)
         return t
@@ -872,7 +873,7 @@ class PoGoBot(object):
         evolveable_pokemon = []
         lowcost = []
         if len(self.inventory["eggs"]) + sum([len(self.inventory["pokemon"][p]) for p in self.inventory["pokemon"]]) == self.player["max_pokemon_storage"]:
-            sys.stdout.write("Evolving pokemon...\n")
+            print("Evolving pokemon...")
             for pid, evos in self.enabled_evolutions.items():
                 if pid in self.inventory["pokemon"] and self.evoreq[pid] <= 25:
                     while evos > 0 and len(self.inventory["pokemon"][pid]) > 0:
@@ -886,28 +887,28 @@ class PoGoBot(object):
                                     evolveable_pokemon.append(pokemon)
                             else:
                                 evolveable_pokemon.append(pokemon)
-            sys.stdout.write("  Found %d low cost pokemon evolutions...\n" % len(lowcost))
+            print("  Found %d low cost pokemon evolutions..." % len(lowcost))
             evolveable_pokemon = evolveable_pokemon + lowcost
-            sys.stdout.write("  There are %d total evolveable pokemon...\n" % len(evolveable_pokemon))
+            print("  There are %d total evolveable pokemon..." % len(evolveable_pokemon))
             if len(evolveable_pokemon) > 100 and "301" in self.inventory["items"]:
-                sys.stdout.write("  Using a lucky egg...")
+                print("  Using a lucky egg...")
                 ret = self.api.use_item_xp_boost(item_id=301)
                 if ret["responses"]["USE_ITEM_XP_BOOST"]["result"] == 1:
-                    sys.stdout.write("success.\n")
+                    print("success.")
                 else:
-                    sys.stdout.write("failed.\n")
+                    print("failed.")
                 time.sleep(delay)
             for pokemon in evolveable_pokemon:
                 ret = self.api.evolve_pokemon(pokemon_id=pokemon["pokemon_data"]["id"])
                 if ret["responses"]["EVOLVE_POKEMON"]["result"] == 1:
-                    sys.stdout.write("    A %s was evolved.\n" % (self.pokemon_id_to_name(self.family_ids[str(pokemon["pokemon_data"]["pokemon_id"])])))
-                    sys.stdout.write("      Experience: %d\n" % ret["responses"]["EVOLVE_POKEMON"]["experience_awarded"])
+                    print("    A %s was evolved." % (self.pokemon_id_to_name(self.family_ids[str(pokemon["pokemon_data"]["pokemon_id"])])))
+                    print("      Experience: %d" % ret["responses"]["EVOLVE_POKEMON"]["experience_awarded"])
                     e += 1
                 time.sleep(delay)
         return e
 
     def kill_time(self, delay):
-        sys.stdout.write("Killing time...\n")
+        print("Killing time...")
         time.sleep(delay)
 
     def play(self):
@@ -958,7 +959,7 @@ class PoGoBot(object):
             except pgoapi.exceptions.ServerSideRequestThrottlingException as e:
                 if lastthrottle != None and time.time()-lastthrottle < throttlesleep:
                     throttlesleep += 1
-                sys.stdout.write("Throttling exeption, taking a %d second timeout!\n" % throttlesleep)
+                print("Throttling exeption, taking a %d second timeout!" % throttlesleep)
                 time.sleep(throttlesleep)
                 lastthrottle = time.time()
 

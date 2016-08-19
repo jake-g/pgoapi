@@ -39,7 +39,7 @@ from pgoapi.utilities import parse_api_endpoint
 from pgoapi.exceptions import AuthException, NotLoggedInException, ServerBusyOrOfflineException, NoPlayerPositionSetException, EmptySubrequestChainException, AuthTokenExpiredException, ServerApiEndpointRedirectException, UnexpectedResponseException
 
 from . import protos
-from POGOProtos.Networking.Requests_pb2 import RequestType
+from POGOProtos.Networking.Requests.RequestType_pb2 import RequestType
 
 logger = logging.getLogger(__name__)
 
@@ -264,6 +264,8 @@ class PGoApiRequest:
                 raise
 
             time.sleep(1)
+            if response == None:
+                execute = True
 
         # cleanup after call execution
         self.log.info('Cleanup of request!')

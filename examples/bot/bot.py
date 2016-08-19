@@ -256,7 +256,7 @@ class PoGoBot(object):
         stardust = 0
         candy = 0
         xp = 0
-        sys.stdout.write("Getting hatched eggs...\n")
+        # sys.stdout.write("Getting hatched eggs...\n")
         try:
             ret = self.api.get_hatched_eggs()
             if 'pokemon_id' in ret["responses"]["GET_HATCHED_EGGS"]:
@@ -274,7 +274,7 @@ class PoGoBot(object):
             return None
 
     def get_rewards(self, delay):
-        sys.stdout.write("Getting level-up rewards...\n")
+        # sys.stdout.write("Getting level-up rewards...\n")
         ret = self.api.level_up_rewards(level=self.inventory["stats"]["level"])
         if ret["responses"]["LEVEL_UP_REWARDS"]["result"] == 1:
             sys.stdout.write("  Items:\n")
@@ -304,7 +304,7 @@ class PoGoBot(object):
         return sorted([x.id() for x in cells])
 
     def get_pois(self, delay):
-        sys.stdout.write("Getting POIs...\n")
+        # sys.stdout.write("Getting POIs...\n")
         lat, lng, alt = self.api.get_position()
         if self.softbanned:
             level = 15
@@ -368,10 +368,10 @@ class PoGoBot(object):
         if newspawnpoints > 0:
             sys.stdout.write("    Found %d new spawnpoints.\n" % newgyms)
             self.scan_stats[level]["spawn_points"] += newspawnpoints
-        if len(self.scan_stats.keys()) > 0:
-            sys.stdout.write("  Scan stats by level:\n")
-            for level, stat in self.scan_stats.iteritems():
-                sys.stdout.write('    %s {"wild_pokemon": %d, "spawn_points": %d}\n' % (level, stat["wild_pokemon"], stat["spawn_points"]))
+        # if len(self.scan_stats.keys()) > 0:
+            # sys.stdout.write("  Scan stats by level:\n")
+            # for level, stat in self.scan_stats.iteritems():
+            #     sys.stdout.write('    %s {"wild_pokemon": %d, "spawn_points": %d}\n' % (level, stat["wild_pokemon"], stat["spawn_points"]))
         time.sleep(delay)
 
     def prune_expired_pokemon(self):
@@ -441,7 +441,7 @@ class PoGoBot(object):
                     sys.stdout.write(",")
 
     def spin_pokestops(self, delay):
-        sys.stdout.write("Spinning pokestops...\n")
+        # sys.stdout.write("Spinning pokestops...\n")
         lat, lng, alt = self.api.get_position()
         for pid, pokestop in self.pois["pokestops"].iteritems():
             if get_distance((pokestop['latitude'], pokestop['longitude']), (lat, lng)) < 0.0004435:
@@ -668,7 +668,7 @@ class PoGoBot(object):
                 self.angle = get_angle((lat, lng), (nearest[0]["latitude"], nearest[0]["longitude"]))
                 lat = lat + pymath.sin(pymath.radians(self.angle)) * r
                 lng = lng + pymath.cos(pymath.radians(self.angle)) * r
-        elif len(self.balls) > 0 and len(self.pois["pokemon"]) > 0:
+        if len(self.balls) > 0 and len(self.pois["pokemon"]) > 0:
             sys.stdout.write("  Heading towards nearby wild pokemon...\n")
             nearest = (None, float("inf"))
             for pid, pokemon in self.pois["pokemon"].iteritems():
@@ -704,7 +704,7 @@ class PoGoBot(object):
         self.last_move_time = now
 
     def save_map(self):
-        sys.stdout.write("Saving map...\n")
+        # sys.stdout.write("Saving map...\n")
         lat, lng, alt = self.api.get_position()
         map = Map()
         map._player = [lat, lng]
@@ -747,7 +747,7 @@ class PoGoBot(object):
             print(map, file=out)
 
     def save_config(self):
-        sys.stdout.write("Saving config...\n")
+        # sys.stdout.write("Saving config...\n")
         self.config["location"] = self.api.get_position()
         dump = {}
         dump.update(self.config)
@@ -792,7 +792,7 @@ class PoGoBot(object):
             yield (x + r * pymath.cos(ang), y + r * pymath.sin(ang))
 
     def process_candies(self):
-        sys.stdout.write("Processing candies...\n")
+        # sys.stdout.write("Processing candies...\n")
         self.enabled_evolutions = {}
         if len(self.inventory["candies"].keys()) > 0:
             candies = {}
@@ -825,9 +825,15 @@ class PoGoBot(object):
             sys.stdout.write("Transfering pokemon...\n")
             transferable_pokemon = []
             for pid in self.inventory["pokemon"]:
-                if "whitelist" in self.config and pid in self.config["whitelist"]:
+                if "whitelist" in self.config and int(pid) in self.config["whitelist"]:
                     continue
-                if pid in self.evoreq.keys():
+                if "blacklist" in self.config and int(pid) in self.config["blacklist"]:
+                    for pokemon in self.inventory["pokemon"][pid]:
+                        pq = self.calc_pq(pokemon)
+                        if pokemon["pokemon_data"]["cp"] < 900:
+                        # if pq < self.config["minpq"] and pokemon["pokemon_data"]["cp"] < self.config["mincp"]:
+                            transferable_pokemon.append((pokemon, pq))
+                elif pid in self.evoreq.keys():  # can evolve
                     if pid not in self.enabled_evolutions:
                         for pokemon in self.inventory["pokemon"][pid]:
                             pq = self.calc_pq(pokemon)
@@ -844,7 +850,7 @@ class PoGoBot(object):
                                     count -= 1
                                 if count == 0:
                                     break
-                else:
+                else: # cant evolve
                     for pokemon in self.inventory["pokemon"][pid]:
                         pq = self.calc_pq(pokemon)
                         if pq < self.config["minpq"] and pokemon["pokemon_data"]["cp"] < self.config["mincp"]:
@@ -864,14 +870,14 @@ class PoGoBot(object):
         if len(self.inventory["eggs"]) + sum([len(self.inventory["pokemon"][p]) for p in self.inventory["pokemon"]]) == self.player["max_pokemon_storage"]:
             sys.stdout.write("Evolving pokemon...\n")
             for pid, evos in self.enabled_evolutions.iteritems():
-                if pid in self.inventory["pokemon"] and self.evoreq[pid] < 25:
+                if pid in self.inventory["pokemon"] and self.evoreq[pid] < 100:
                     while evos > 0 and len(self.inventory["pokemon"][pid]) > 0:
                         lowcost.append(self.inventory["pokemon"][pid].pop())
                         evos -= 1
             sys.stdout.write("  Found %d low cost pokemon evolutions...\n" % len(lowcost))
             evolveable_pokemon = [] + lowcost
             sys.stdout.write("  There are %d total evolveable pokemon...\n" % len(evolveable_pokemon))
-            if len(evolveable_pokemon) > 80 and "301" in self.inventory["items"]:
+            if len(evolveable_pokemon) > 50 and "301" in self.inventory["items"]:
                 sys.stdout.write("  Using a lucky egg...")
                 ret = self.api.use_item_xp_boost(item_id=301)
                 if ret["responses"]["USE_ITEM_XP_BOOST"]["result"] == 1:
@@ -889,7 +895,7 @@ class PoGoBot(object):
         return e
 
     def kill_time(self, delay):
-        sys.stdout.write("Killing time...\n")
+        # sys.stdout.write("Killing time...\n")
         time.sleep(delay)
 
     def play(self):
@@ -907,6 +913,7 @@ class PoGoBot(object):
                 if not self.softbanned:
                     self.save_config()
                     hatched = self.get_hatched_eggs(delay)
+                    # hatched = 1
                     self.get_trainer_info(hatched, delay)
                     self.get_rewards(delay)
                     self.process_candies()
@@ -928,7 +935,7 @@ class PoGoBot(object):
                     self.prune_expired_pokemon()
                     if not self.config["nocatch"] and len(self.balls) > 0:
                         self.catch_wild_pokemon(delay)
-                        # self.catch_incense_pokemon(delay)
+                        self.catch_incense_pokemon(delay)
                         self.catch_lure_pokemon(delay)
                     if not self.config["nospin"]:
                         self.spin_pokestops(1)
